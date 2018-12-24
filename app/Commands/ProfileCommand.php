@@ -6,6 +6,7 @@ use HnhDigital\CliHelper\CommandInternalsTrait;
 use HnhDigital\CliHelper\FileSystemTrait;
 use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Process\InputStream;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class ProfileCommand extends Command
@@ -439,6 +440,291 @@ class ProfileCommand extends Command
         $this->saveProfile($profile, 'remote');
 
         return $this->configureRemoteProfile($profile);
+    }
+
+    /**
+     * Configure local profile.
+     *
+     * @return void
+     */
+    private function configureLocalProfile($profile)
+    {
+        $menu = [];
+
+        foreach (array_get($this->profiles, $profile.'.local', []) as $name => $local_details) {
+            $menu[$name] = sprintf(
+                '%s / %s@%s %s',
+                strtoupper($name),
+                array_get($local_details, 'username', ''),
+                array_get($local_details, 'host'),
+                array_get($local_details, 'working', false) ? '✔️' : '❌'
+            );
+        }
+
+        $menu['create'] = 'Create new local';
+        $menu['exit'] = 'Back';
+
+        $option = $this->menu('Configuring local records for '.strtoupper($profile), $menu)
+            ->disableDefaultItems()
+            ->open();
+
+        switch ($option) {
+            case 'create':
+                return $this->createLocalProfile($profile);
+            case 'exit':
+                return $this->configureProfile($profile);
+            default:
+                return $this->updateLocalProfile($profile, $option);
+        }
+    }
+
+    /**
+     * Update a local profile.
+     *
+     * @return void
+     */
+    private function updateLocalProfile($profile, $name)
+    {
+        $data = array_get($this->profiles, $profile.'.local.'.$name, []);
+
+        $option = $this->menu(sprintf('Configuring %s / %s', strtoupper($name), strtoupper($profile)), [
+            'name'        => 'Name: '.$name,
+            'host'        => 'Host: '.array_get($data, 'host', ''),
+            'username'    => 'Username: '.array_get($data, 'username', ''),
+            'password'    => 'Password: ******',
+            'test'        => sprintf('Test connection %s', array_get($data, 'working', false) ? '✔️' : '❌'),
+            'exit'        => 'Back',
+        ])->disableDefaultItems()->open();
+
+        switch ($option) {
+            case 'exit':
+                return $this->configureLocalProfile($profile);
+            case 'test':
+                return $this->testLocalProfile($profile, $name);
+            case 'name':
+                return $this->updateLocalProfileName($profile, $name, $option);
+            case 'password':
+                return $this->updateLocalProfilePassword($profile, $name);
+            default:
+                return $this->updateLocalProfileKey($profile, $name, $option);
+        }
+    }
+
+    /**
+     * Update local profile key.
+     *
+     * @return void
+     */
+    private function updateLocalProfileName($profile, $name, $new_name)
+    {
+        // Profile name.
+        while (true) {
+            $new_name = $this->ask(sprintf('Profile name [%s]', $name));
+            $new_name = preg_replace('/[^a-z0-9_-]/', '', strtolower($new_name));
+
+            // New name is empty or invalid.
+            if (empty($new_name)) {
+                return $this->updateLocalProfile($profile, $name);
+            }
+
+            // New name already exists.
+            if (array_has($this->profiles, $profile.'.local.'.$new_name)) {
+                $this->error(sprintf('%s already exists.', $new_name));
+
+                return $this->updateLocalProfile($profile, $name);
+            }
+
+            break;
+        }        
+
+        // Create new entry.
+        array_set($this->profiles, $profile.'.local.'.$new_name, array_get($this->profiles, $profile.'.local.'.$name));
+
+        // Remove old entry.
+        unset($this->profiles[$profile]['local'][$name]);
+
+        $process = new Process([
+            '/usr/bin/mysql_config_editor',
+            'remove',
+            '--login-path='.$name,
+        ]);
+
+        $process->run();
+
+        // Save to disk.
+        $this->saveProfile($profile, 'local');
+
+        return $this->updateLocalProfilePassword($profile, $new_name);
+    }
+
+    /**
+     * Update local profile key.
+     *
+     * @return void
+     */
+    private function updateLocalProfileKey($profile, $name, $key)
+    {
+        $value = array_get($this->profiles, $profile.'.local.'.$name.'.'.$key, '');
+
+        $new_value = $this->ask(sprintf('%s [%s]', ucfirst($key), $value));
+
+        if (empty($new_value)) {
+            return $this->updateLocalProfile($profile, $name);
+        }
+
+        array_set($this->profiles, $profile.'.local.'.$name.'.'.$key, $new_value);
+
+        $this->saveProfile($profile, 'local');
+
+        return $this->updateLocalProfilePassword($profile, $name);
+    }
+
+    /**
+     * Update local profile password.
+     *
+     * @return void
+     */
+    private function testLocalProfile($profile, $name)
+    {
+        $process = new Process('/usr/bin/mysql --login-path=$NAME -e "$SQL"');
+
+        $process->run(null, [
+            'NAME' => $name,
+            'SQL'  => ';',
+        ]);
+
+        if ($process->getExitCode() > 0) {
+            $this->error($process->getErrorOutput());
+            $connection_works = false;
+        } else {
+            $this->info(sprintf(' ✔️ Connection successful', $name));
+            $connection_works = true;
+        }
+
+        array_set($this->profiles, $profile.'.local.'.$name.'.working', $connection_works);
+        $this->saveProfile($profile, 'local');
+
+        $this->ask('Press any key to continue');
+
+        return $this->updateLocalProfile($profile, $name);
+    }
+
+    /**
+     * Test local settings.
+     *
+     * @return void
+     */
+    private function updateLocalProfilePassword($profile, $name)
+    {
+        $process = new Process([
+            '/usr/bin/mysql_config_editor',
+            'remove',
+            '--login-path='.$name,
+        ]);
+
+        $process->run();
+
+        $process = new Process([
+            '/usr/bin/mysql_config_editor',
+            'set',
+            '--login-path='.$name,
+            '--host='.array_get($this->profiles, $profile.'.local.'.$name.'.host'),
+            '--user='.array_get($this->profiles, $profile.'.local.'.$name.'.username'),
+            '--password',
+        ]);
+
+        $process->run();
+
+        return $this->testLocalProfile($profile, $name);
+    }
+
+
+    /**
+     * Create local profile.
+     *
+     * @return void
+     */
+    private function createLocalProfile($profile)
+    {
+        // Profile name.
+        while (true) {
+            $name = $this->ask('Set the name of this new local');
+
+            $name = preg_replace('/[^a-z0-9_-]/', '', strtolower($name));
+
+            if (empty($name)) {
+                return $this->configureLocalProfile($profile);
+            }
+
+            if (array_has($this->profiles, $profile.'.local.'.$name)) {
+                $this->error(sprintf('%s already exists.', $name));
+                continue;
+            }
+
+            break;
+        }
+
+        // Host name.
+        while (true) {
+            $host = $this->ask('Host name');
+
+            if (empty($host)) {
+                continue;
+            }
+
+            break;
+        }
+
+        // Username
+        while (true) {
+            $username = $this->ask('Username');
+
+            if (empty($username)) {
+                continue;
+            }
+
+            break;
+        }
+
+        // Password
+        while (true) {
+            $password = $this->ask('Password');
+
+            if (empty($password)) {
+                continue;
+            }
+
+            break;
+        }
+
+        $process = new Process([
+            '/usr/bin/mysql_config_editor',
+            'remove',
+            '--login-path='.$name,
+        ]);
+
+        $process->run();
+
+        $process = new Process([
+            '/usr/bin/mysql_config_editor',
+            'set',
+            '--login-path='.$name,
+            '--host='.$host,
+            '--user='.$username,
+            '--password',
+        ]);
+
+        $process->run();
+
+        array_set($this->profiles, $profile.'.local.'.$name, [
+            'host'        => $host,
+            'username'    => $username,
+            'working'     => false,
+        ]);
+
+        $this->saveProfile($profile, 'local');
+
+        return $this->testLocalProfile($profile, $name);
     }
 
     /**
