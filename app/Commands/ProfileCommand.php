@@ -81,7 +81,7 @@ class ProfileCommand extends Command
      */
     private function loadExistingProfiles()
     {
-        $profiles_dir = $this->getDefaultWorkingDirectory('profiles');
+        $profiles_dir = $this->getConfigPath('profiles');
 
         $this->profiles = [];
 
@@ -122,7 +122,9 @@ class ProfileCommand extends Command
         }
 
         // Create profile.
-        $this->getDefaultWorkingDirectory('profiles/'.$name);
+        $this->getConfigPath('profiles/'.$name);
+
+        return $this->mainMenu();
     }
 
     /**
@@ -163,7 +165,13 @@ class ProfileCommand extends Command
         $menu = [];
 
         foreach (array_get($this->profiles, $profile.'.remote', []) as $name => $remote_details) {
-            $menu[$name] = sprintf('%s / %s / %s', strtoupper($name), array_get($remote_details, 'host'), array_get($remote_details, 'db'));
+            $menu[$name] = sprintf(
+                '%s / %s@%s %s',
+                strtoupper($name),
+                array_get($remote_details, 'username', ''),
+                array_get($remote_details, 'host'),
+                array_get($remote_details, 'working', false) ? '✔️' : '❌'
+            );
         }
 
         $menu['create'] = 'Create new remote';
@@ -178,7 +186,198 @@ class ProfileCommand extends Command
                 return $this->createRemoteProfile($profile);
             case 'exit':
                 return $this->configureProfile($profile);
+            default:
+                return $this->updateRemoteProfile($profile, $option);
         }
+    }
+
+    /**
+     * Update a remote profile.
+     *
+     * @return void
+     */
+    private function updateRemoteProfile($profile, $name)
+    {
+        $data = array_get($this->profiles, $profile.'.remote.'.$name, []);
+
+        $public_key = array_get($data, 'public_key', $this->getUserHome('.ssh/id_rsa.pub'));
+        $private_key = array_get($data, 'private_key', $this->getUserHome('.ssh/id_rsa'));
+
+        $option = $this->menu(sprintf('Configuring %s / %s', strtoupper($name), strtoupper($profile)), [
+            'name'        => 'Name: '.$name,
+            'host'        => 'Host: '.array_get($data, 'host', ''),
+            'port'        => 'Port: '.array_get($data, 'port', '22'),
+            'username'    => 'Username: '.array_get($data, 'username', ''),
+            'public_key'  => sprintf('Public Key: %s %s', $public_key, file_exists($public_key) ? '✔️' : '❌'),
+            'private_key' => sprintf('Private Key: %s %s', $private_key, file_exists($private_key) ? '✔️' : '❌'),
+            'test'        => sprintf('Test connection %s', array_get($data, 'working', false) ? '✔️' : '❌'),
+            'exit'        => 'Back',
+        ])->disableDefaultItems()->open();
+
+        switch ($option) {
+            case 'exit':
+                return $this->configureRemoteProfile($profile);
+            case 'test':
+                return $this->testRemoteProfile($profile, $name);
+            case 'name':
+                return $this->updateRemoteProfileName($profile, $name, $option);
+            default:
+                return $this->updateRemoteProfileKey($profile, $name, $option);
+        }
+    }
+
+    /**
+     * Test the remote connection.
+     *
+     * @return void
+     */
+    private function testRemoteProfile($profile, $name)
+    {
+        $connection_works = false;
+
+        $data = array_get($this->profiles, $profile.'.remote.'.$name, []);
+
+        $public_key = array_get($data, 'public_key', $this->getUserHome('.ssh/id_rsa.pub'));
+        $private_key = array_get($data, 'private_key', $this->getUserHome('.ssh/id_rsa'));
+
+        $this->line('');
+        $this->line(sprintf(' Host: %s', array_get($data, 'host', '')));
+
+        if (!file_exists($public_key) || !file_exists($private_key)) {
+            $this->error(' ❌ Public/private key does not exist.');
+
+            // Force pause to show errors.
+            $this->ask('Press any key to continue');
+
+            return $this->updateRemoteProfile($profile, $name);
+        }
+
+        try {
+            $connection = ssh2_connect(array_get($data, 'host', ''), array_get($data, 'port', 22));
+            $auth = ssh2_auth_pubkey_file(
+                $connection,
+                array_get($data, 'username', ''),
+                $public_key,
+                $private_key
+            );
+
+            // Connection failed.
+            if (!$connection) {
+                $this->error(sprintf(' Connection %s failed ❌', $name));
+            } else {
+                $this->info(sprintf(' ✔️ Connection successful', $name));
+
+                // Check binary exists.
+                $binary_exists_stream = ssh2_exec($connection, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
+                stream_set_blocking($binary_exists_stream, true); 
+                $binary_exists = !(boolean) stream_get_contents($binary_exists_stream);
+ 
+                if (!$binary_exists) {
+                    $this->error(sprintf(' ❌ mysql-helper binary does not exist', $name));
+                } else {
+                    $this->info(sprintf(' ✔ mysql-helper binary exists', $name));
+                    $connection_works = true;
+                }
+
+                ssh2_disconnect($connection);
+            }
+
+        } catch (\Exception $e) {
+            $this->error(sprintf('%s.', $e->getMessage()));
+        }
+
+        array_set($this->profiles, $profile.'.remote.'.$name.'.working', $connection_works);
+        $this->saveProfile($profile, 'remote');
+
+        if (!$connection_works) {
+
+            if ($this->confirm('Test again?')) {
+                return $this->testRemoteProfile($profile, $name);
+            }
+
+            return $this->updateRemoteProfile($profile, $name);
+        }
+
+        $this->ask('Press any key to continue');
+
+        return $this->updateRemoteProfile($profile, $name);
+    }
+
+    /**
+     * Update remote profile key.
+     *
+     * @return void
+     */
+    private function updateRemoteProfileName($profile, $name, $new_name)
+    {
+        // Profile name.
+        while (true) {
+            $new_name = $this->ask(sprintf('Profile name [%s]', $name));
+            $new_name = preg_replace('/[^a-z0-9_-]/', '', strtolower($new_name));
+
+            // New name is empty or invalid.
+            if (empty($new_name)) {
+                return $this->updateRemoteProfile($profile, $name);
+            }
+
+            // New name already exists.
+            if (array_has($this->profiles, $profile.'.remote.'.$new_name)) {
+                $this->error(sprintf('%s already exists.', $new_name));
+
+                return $this->updateRemoteProfile($profile, $name);
+            }
+
+            break;
+        }        
+
+        // Create new entry.
+        array_set($this->profiles, $profile.'.remote.'.$new_name, array_get($this->profiles, $profile.'.remote.'.$name));
+
+        // Remove old entry.
+        unset($this->profiles[$profile]['remote'][$name]);
+
+        // Save to disk.
+        $this->saveProfile($profile, 'remote');
+
+        return $this->updateRemoteProfile($profile, $new_name);
+    }
+
+    /**
+     * Update remote profile key.
+     *
+     * @return void
+     */
+    private function updateRemoteProfileKey($profile, $name, $key)
+    {
+        $default_value = '';
+
+        switch ($key) {
+            case 'public_key':
+                $default_value = $this->getUserHome('.ssh/id_rsa.pub');
+                break;
+            case 'private_key':
+                $default_value = $this->getUserHome('.ssh/id_rsa');
+                break;
+        }
+
+        $value = array_get($this->profiles, $profile.'.remote.'.$name.'.'.$key, $default_value);
+
+        $new_value = $this->ask(sprintf('%s [%s]', ucfirst($key), $value));
+
+        if (empty($new_value)) {
+            return $this->updateRemoteProfile($profile, $name);
+        }
+
+        // Expand tilde.
+        if (substr($new_value, 0, 1) == '~') {
+            $new_value = $this->getUserHome(substr($new_value, 2));
+        }
+
+        array_set($this->profiles, $profile.'.remote.'.$name.'.'.$key, $new_value);
+
+        $this->saveProfile($profile, 'remote');
+
+        return $this->updateRemoteProfile($profile, $name);
     }
 
     /**
@@ -188,8 +387,6 @@ class ProfileCommand extends Command
      */
     private function createRemoteProfile($profile)
     {
-        $remote_profile = array_get($this->profiles, $profile.'.remote', []);
-
         // Profile name.
         while (true) {
             $name = $this->ask('Set the name of this new remote');
@@ -200,7 +397,7 @@ class ProfileCommand extends Command
                 return $this->configureRemoteProfile($profile);
             }
 
-            if (isset($remote_profile[$name])) {
+            if (array_has($this->profiles, $profile.'.remote.'.$name)) {
                 $this->error(sprintf('%s already exists.', $name));
                 continue;
             }
@@ -219,28 +416,40 @@ class ProfileCommand extends Command
             break;
         }
 
-        // Database profile name.
+        // Username
         while (true) {
-            $db = $this->ask('Database profile name');
+            $username = $this->ask('Username');
 
-            if (empty($db)) {
+            if (empty($username)) {
                 continue;
             }
 
             break;
         }
 
-        $remote_profile[$name] = [
-            'host' => $host,
-            'db'   => $db,
-        ];
+        array_set($this->profiles, $profile.'.remote.'.$name, [
+            'host'        => $host,
+            'port'        => 22,
+            'username'    => $username,
+            'public_key'  => $this->getUserHome('.ssh/id_rsa.pub'),
+            'private_key' => $this->getUserHome('.ssh/id_rsa'),
+            'working'     => false,
+        ]);
 
-        array_set($this->profiles, $profile.'.remote', $remote_profile);
-
-        $remote_path = $this->getDefaultWorkingDirectory('profiles/'.$profile.'/remote.yml', true);
-        $this->saveYamlFile($remote_path, $remote_profile);
+        $this->saveProfile($profile, 'remote');
 
         return $this->configureRemoteProfile($profile);
+    }
+
+    /**
+     * Save profile.
+     *
+     * @return void
+     */
+    private function saveProfile($profile, $file)
+    {
+        $remote_path = $this->getConfigPath('profiles/'.$profile.'/'.$file.'.yml', true);
+        $this->saveYamlFile($remote_path, array_get($this->profiles, $profile.'.'.$file));
     }
 
     /**
@@ -250,7 +459,7 @@ class ProfileCommand extends Command
      */
     private function deleteProfile($profile)
     {
-        $path = $this->getDefaultWorkingDirectory('profiles/'.$profile);
+        $path = $this->getConfigPath('profiles/'.$profile);
 
         $this->removeDirectory($path);
 
