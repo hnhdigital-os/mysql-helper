@@ -31,6 +31,7 @@ class InstallCommand extends Command
      * @var array
      */
     protected $packages = [
+        'php-ssh2',
         'zip',
         'pv',
     ];
