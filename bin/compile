@@ -16,7 +16,7 @@ echo "$release-$version"
 sed -i s/REPO-VERSION/$version/g $DIR/../config/app.php
 sed -i s/REPO-RELEASE/$release/g $DIR/../config/app.php
 
-./fs-watcher app:build
+./mysql-helper app:build
 
 sed -i s/$version/REPO-VERSION/g $DIR/../config/app.php
 sed -i s/$release/REPO-RELEASE/g $DIR/../config/app.php
