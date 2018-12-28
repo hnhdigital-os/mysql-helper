@@ -107,7 +107,7 @@ fi
 STABLE_VERSION=$(ls "${ROOT}/${MODE_TARGET}/download" --ignore snapshot | grep -E '^[0-9.]+$' | sort -r -V | head -1)
 STABLE_BUILD="${STABLE_VERSION}/${BUILD_FILE}"
 
-if [ [ "" == "$STABLE_VERSION" ] && [ "dev" == "${MODE}" ] ]; then
+if [ "" == "$STABLE_VERSION" ] && [ "dev" == "${MODE}" ]; then
   STABLE_VERSION="${SNAPSHOT_VERSION}"
   STABLE_BUILD="snapshot/${BUILD_FILE}-${SNAPSHOT_VERSION}"
 fi
