@@ -13,8 +13,8 @@ ROOT="$( cd "$( dirname "$0" )" && cd ./ && pwd )"
 
 # Standard config.
 BUILD="build-src"
-BUILD_FILE="fs-watcher"
-REPO="git@github.com:hnhdigital-os/fs-watcher.git"
+BUILD_FILE="mysql-helper"
+REPO="git@github.com:hnhdigital-os/mysql-helper.git"
 BRANCH="master"
 COMPOSER="composer"
 TARGET="public-web"
