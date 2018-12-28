@@ -65,6 +65,8 @@ fi
 
 git submodule update --remote
 
+mkdir -p "${ROOT}/${BUILD}/builds"
+
 SNAPSHOT_VERSION=""
 
 # create latest dev build
