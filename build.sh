@@ -71,8 +71,6 @@ SNAPSHOT_VERSION=""
 if [ "dev" == "${MODE}" ]; then
   VERSION=`git log --pretty="%H" -n1 HEAD`
 
-  mkdir -p "${ROOT}/${MODE_TARGET}/download/snapshot/"
-
   if [ ! -f "${ROOT}/${MODE_TARGET}/${VERSION}" -o "${VERSION}" != "`cat \"${ROOT}/${MODE_TARGET}/snapshot\"`" ]; then
     rm -rf "${ROOT}/${MODE_TARGET}/download/snapshot/"
     mkdir -p "${ROOT}/${MODE_TARGET}/download/snapshot/"
