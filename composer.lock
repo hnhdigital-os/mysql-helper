@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "ba7074e509596d4f86b327836ff946f0",
+    "content-hash": "90869b8de51107258299adda7652ff8d",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -275,12 +275,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/hnhdigital-os/php-cli-helper.git",
-                "reference": "a67f612fe8eb731ea13bb6911c73f40ceb9ed3ed"
+                "reference": "011316e784fbbf609cb66a399164d8ef7eae12dd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hnhdigital-os/php-cli-helper/zipball/a67f612fe8eb731ea13bb6911c73f40ceb9ed3ed",
-                "reference": "a67f612fe8eb731ea13bb6911c73f40ceb9ed3ed",
+                "url": "https://api.github.com/repos/hnhdigital-os/php-cli-helper/zipball/011316e784fbbf609cb66a399164d8ef7eae12dd",
+                "reference": "011316e784fbbf609cb66a399164d8ef7eae12dd",
                 "shasum": ""
             },
             "require": {
@@ -305,7 +305,7 @@
                 }
             ],
             "description": "Provides various simple bash commands.",
-            "time": "2018-12-21T03:42:39+00:00"
+            "time": "2018-12-24T05:17:45+00:00"
         },
         {
             "name": "illuminate/cache",
@@ -4069,7 +4069,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^7.1.3"
+        "php": "^7.1.3",
+        "ext-ssh2": "*"
     },
     "platform-dev": [],
     "platform-overrides": {
