@@ -1,4 +1,4 @@
 {
-  "stable": {"path": "/download/snapshot/mysql-helper-6049bcefa6427cbbc31fe82b4596e4c34b0509fe", "version": "6049bcefa6427cbbc31fe82b4596e4c34b0509fe", "min-php": 71300},
-  "snapshot": {"path": "/download/snapshot/mysql-helper-6049bcefa6427cbbc31fe82b4596e4c34b0509fe", "version": "6049bcefa6427cbbc31fe82b4596e4c34b0509fe", "min-php": 71300}
+  "stable": {"path": "/download/snapshot/mysql-helper-c4164fc1265f4aa5c8a5688d3ce55ea02c23a25e", "version": "c4164fc1265f4aa5c8a5688d3ce55ea02c23a25e", "min-php": 71300},
+  "snapshot": {"path": "/download/snapshot/mysql-helper-c4164fc1265f4aa5c8a5688d3ce55ea02c23a25e", "version": "c4164fc1265f4aa5c8a5688d3ce55ea02c23a25e", "min-php": 71300}
 }
