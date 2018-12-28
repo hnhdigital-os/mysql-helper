@@ -2,16 +2,15 @@
 
 namespace App\Commands;
 
+use App\Traits\SharedTrait;
+use DB;
 use HnhDigital\CliHelper\CommandInternalsTrait;
 use HnhDigital\CliHelper\FileSystemTrait;
 use LaravelZero\Framework\Commands\Command;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\InputStream;
-use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class ProfileCommand extends Command
 {
-    use CommandInternalsTrait, FileSystemTrait;
+    use CommandInternalsTrait, FileSystemTrait, SharedTrait;
 
     /**
      * The signature of the command.
@@ -73,29 +72,6 @@ class ProfileCommand extends Command
         }
 
         return $this->configureProfile($option);
-    }
-
-    /**
-     * Load existing profiles.
-     *
-     * @return void
-     */
-    private function loadExistingProfiles()
-    {
-        $profiles_dir = $this->getConfigPath('profiles');
-
-        $this->profiles = [];
-
-        $profiles = array_filter(glob($profiles_dir.'/*'), 'is_dir');
-
-        foreach ($profiles as $path) {
-            $name = basename($path);
-
-            $this->profiles[$name] = [
-                'remote' => $this->loadYamlFile($path.'/remote.yml'),
-                'local'  => $this->loadYamlFile($path.'/local.yml'),
-            ];
-        }
     }
 
     /**
@@ -503,8 +479,6 @@ class ProfileCommand extends Command
                 return $this->testLocalProfile($profile, $name);
             case 'name':
                 return $this->updateLocalProfileName($profile, $name, $option);
-            case 'password':
-                return $this->updateLocalProfilePassword($profile, $name);
             default:
                 return $this->updateLocalProfileKey($profile, $name, $option);
         }
@@ -543,18 +517,10 @@ class ProfileCommand extends Command
         // Remove old entry.
         unset($this->profiles[$profile]['local'][$name]);
 
-        $process = new Process([
-            '/usr/bin/mysql_config_editor',
-            'remove',
-            '--login-path='.$name,
-        ]);
-
-        $process->run();
-
         // Save to disk.
         $this->saveProfile($profile, 'local');
 
-        return $this->updateLocalProfilePassword($profile, $new_name);
+        return $this->updateLocalProfile($profile, $new_name);
     }
 
     /**
@@ -576,7 +542,7 @@ class ProfileCommand extends Command
 
         $this->saveProfile($profile, 'local');
 
-        return $this->updateLocalProfilePassword($profile, $name);
+        return $this->updateLocalProfile($profile, $name);
     }
 
     /**
@@ -586,19 +552,16 @@ class ProfileCommand extends Command
      */
     private function testLocalProfile($profile, $name)
     {
-        $process = new Process('/usr/bin/mysql --login-path=$NAME -e "$SQL"');
+        $this->loadDatabaseConnections($profile);
 
-        $process->run(null, [
-            'NAME' => $name,
-            'SQL'  => ';',
-        ]);
-
-        if ($process->getExitCode() > 0) {
-            $this->error($process->getErrorOutput());
-            $connection_works = false;
-        } else {
-            $this->info(sprintf(' ✔️ Connection successful', $name));
+        try {
+            DB::connection($name)->select('show databases');
             $connection_works = true;
+            $this->info(sprintf(' ✔️ Connection successful', $name));
+        } catch (\Exception $e) {
+            $this->error($e->getMessage());
+            $connection_works = false;
+            $this->error(sprintf(' Connection %s failed ❌', $name));
         }
 
         array_set($this->profiles, $profile.'.local.'.$name.'.working', $connection_works);
@@ -607,35 +570,6 @@ class ProfileCommand extends Command
         $this->ask('Press any key to continue');
 
         return $this->updateLocalProfile($profile, $name);
-    }
-
-    /**
-     * Test local settings.
-     *
-     * @return void
-     */
-    private function updateLocalProfilePassword($profile, $name)
-    {
-        $process = new Process([
-            '/usr/bin/mysql_config_editor',
-            'remove',
-            '--login-path='.$name,
-        ]);
-
-        $process->run();
-
-        $process = new Process([
-            '/usr/bin/mysql_config_editor',
-            'set',
-            '--login-path='.$name,
-            '--host='.array_get($this->profiles, $profile.'.local.'.$name.'.host'),
-            '--user='.array_get($this->profiles, $profile.'.local.'.$name.'.username'),
-            '--password',
-        ]);
-
-        $process->run();
-
-        return $this->testLocalProfile($profile, $name);
     }
 
 
@@ -688,7 +622,7 @@ class ProfileCommand extends Command
 
         // Password
         while (true) {
-            $password = $this->ask('Password');
+            $password = $this->secret('Password');
 
             if (empty($password)) {
                 continue;
@@ -697,28 +631,10 @@ class ProfileCommand extends Command
             break;
         }
 
-        $process = new Process([
-            '/usr/bin/mysql_config_editor',
-            'remove',
-            '--login-path='.$name,
-        ]);
-
-        $process->run();
-
-        $process = new Process([
-            '/usr/bin/mysql_config_editor',
-            'set',
-            '--login-path='.$name,
-            '--host='.$host,
-            '--user='.$username,
-            '--password',
-        ]);
-
-        $process->run();
-
         array_set($this->profiles, $profile.'.local.'.$name, [
             'host'        => $host,
             'username'    => $username,
+            'password'    => $password,
             'working'     => false,
         ]);
 
