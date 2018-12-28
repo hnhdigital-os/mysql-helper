@@ -54,5 +54,5 @@
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "bin": ["db-helper"]
+    "bin": ["mysql-helper"]
 }
