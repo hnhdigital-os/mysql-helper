@@ -106,9 +106,9 @@ echo "${LATEST_VERSION}" > "${ROOT}/${MODE_TARGET}/latest"
 
 versions_contents="{\n"
 
-while IFS= read -r VERSION; do
+while IFS= read -r -d "|" VERSION; do
   versions_contents="${versions_contents}  \"${VERSION}\": {\"path\": \"/download/${VERSION}/mysql-helper\"}\n"
-done <<< $(find "${ROOT}/${MODE_TARGET}/download" -maxdepth 1 -mindepth 1 -print0)
+done <<< $(find "${ROOT}/${MODE_TARGET}/download" -maxdepth 1 -mindepth 1 -printf '%f|')
 
 versions_contents="${versions_contents}}"
 
