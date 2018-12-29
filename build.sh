@@ -61,7 +61,7 @@ git submodule update --remote
 
 mkdir -p "${ROOT}/${BUILD}/builds"
 
-SNAPSHOT_VERSION=""
+touch "${ROOT}/${MODE_TARGET}/latest"
 
 # create latest non-stable version
 if [ "stable" != "${MODE}" ]; then
@@ -75,7 +75,7 @@ if [ "stable" != "${MODE}" ]; then
     touch --date="`git log -n1 --pretty=%ci HEAD`" "builds/${BUILD_FILE}" && \
     git reset --hard -q ${VERSION} && \
     echo "${VERSION}" > "${ROOT}/${MODE_TARGET}/latest_new" && \
-    mv "builds/${BUILD_FILE}" "${ROOT}/${MODE_TARGET}/download/snapshot/${BUILD_FILE}" && \
+    mv "builds/${BUILD_FILE}" "${ROOT}/${MODE_TARGET}/download/{VERSION}/${BUILD_FILE}" && \
     mv "${ROOT}/${MODE_TARGET}/latest_new" "${ROOT}/${MODE_TARGET}/latest"
 
     SNAPSHOT_VERSION=$(head -c40 "${ROOT}/${MODE_TARGET}/latest")
