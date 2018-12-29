@@ -1,4 +1,3 @@
 {
-  "stable": {"path": "/download/snapshot/mysql-helper-a47e89b3f791c3f404992bd013f1987356dd844c", "version": "a47e89b3f791c3f404992bd013f1987356dd844c", "min-php": 71300},
-  "snapshot": {"path": "/download/snapshot/mysql-helper-a47e89b3f791c3f404992bd013f1987356dd844c", "version": "a47e89b3f791c3f404992bd013f1987356dd844c", "min-php": 71300}
+  "dev": {"path": "/download//mysql-helper", "version": "", "min-php": 71300}
 }
