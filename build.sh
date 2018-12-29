@@ -71,7 +71,7 @@ if [ "stable" != "${MODE}" ]; then
     rm -rf "${ROOT}/${MODE_TARGET}/download/"
     mkdir -p "${ROOT}/${MODE_TARGET}/download/${VERSION}/"
     ${COMPOSER} install -q --no-dev && \
-    bin/compile ${VERSION} && \
+    bin/compile ${MODE} ${VERSION} && \
     touch --date="`git log -n1 --pretty=%ci HEAD`" "builds/${BUILD_FILE}" && \
     git reset --hard -q ${VERSION} && \
     echo "${VERSION}" > "${ROOT}/${MODE_TARGET}/latest_new" && \
@@ -90,7 +90,7 @@ if [ "stable" == "${MODE}" ]; then
       mkdir -p "${ROOT}/${MODE_TARGET}/download/${VERSION}/"
       git checkout ${VERSION} -q && \
       ${COMPOSER} install -q --no-dev && \
-      bin/compile ${VERSION} && \
+      bin/compile stable && \
       touch --date="`git log -n1 --pretty=%ci ${VERSION}`" "builds/${BUILD_FILE}" && \
       git reset --hard -q ${VERSION} && \
       mv "builds/${BUILD_FILE}" "${ROOT}/${MODE_TARGET}/download/${VERSION}/${BUILD_FILE}"
