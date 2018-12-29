@@ -108,7 +108,7 @@ versions_contents="{\n"
 
 while IFS= read -r VERSION; do
   versions_contents="${versions_contents}  \"${VERSION}\": {\"path\": \"/download/${VERSION}/mysql-helper\"}\n"
-done <<< $(find "${ROOT}/${MODE_TARGET}/download" -maxdepth 1 -mindepth 1 -printf '%f\n')
+done <<< $(find "${ROOT}/${MODE_TARGET}/download" -maxdepth 1 -mindepth 1 -print0)
 
 versions_contents="${versions_contents}}"
 
