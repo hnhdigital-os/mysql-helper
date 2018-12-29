@@ -98,7 +98,7 @@ if [ "stable" == "${MODE}" ]; then
     fi
   done
 
-  LATEST_VERSION=$(ls "${ROOT}/${MODE_TARGET}/download" --ignore snapshot | grep -E '^[0-9.]+$' | sort -r -V | head -1)
+  LATEST_VERSION=$(ls "${ROOT}/${MODE_TARGET}/download" | grep -E '^[0-9.]+$' | sort -r -V | head -1)
   LATEST_BUILD="${LATEST_VERSION}/${BUILD_FILE}"
 fi
 
