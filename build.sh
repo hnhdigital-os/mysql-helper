@@ -104,25 +104,15 @@ fi
 
 echo "${LATEST_VERSION}" > "${ROOT}/${MODE_TARGET}/latest"
 
+versions_contents="{\n"
 
-> "${ROOT}/${MODE_TARGET}/versions"
+while IFS= read -r VERSION; do
+  versions_contents="${versions_contents}  \"${VERSION}\": {\"path\": \"/download/${VERSION}/mysql-helper\"}\n"
+done <<< $(find "${ROOT}/${MODE_TARGET}/download" -maxdepth 1 -mindepth 1 -printf '%f\n')
 
-read -r -d '' versions < EOM
-{
-EOM
+versions_contents="${versions_contents}}"
 
-find "${ROOT}/${MODE_TARGET}/download" -maxdepth 1 -mindepth 1 -printf '%f\n' |
-  while IFS= read -r -d $'\0' VERSION; do
-    read -r -d '' versions < EOM
-      "${VERSION}": {"path": "/download/${VERSION}/${BUILD_FILE}"}
-    EOM
-  done
-
-read -r -d '' versions < EOM
-}
-EOM
-
-echo "${versions}" > "${ROOT}/${MODE_TARGET}/versions"
+echo -e "${versions_contents}" > "${ROOT}/${MODE_TARGET}/versions"
 
 # empty checksum
 CHECKSUM_FILE="${ROOT}/${MODE_TARGET}/checksum"
