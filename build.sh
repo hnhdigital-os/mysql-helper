@@ -69,16 +69,17 @@ if [ "stable" != "${MODE}" ]; then
 
   if [ ! -f "${ROOT}/${MODE_TARGET}/${VERSION}" -o "${VERSION}" != "`cat \"${ROOT}/${MODE_TARGET}/latest\"`" ]; then
     rm -rf "${ROOT}/${MODE_TARGET}/download/"
-    mkdir -p "${ROOT}/${MODE_TARGET}/download/{VERSION}/"
+    mkdir -p "${ROOT}/${MODE_TARGET}/download/${VERSION}/"
     ${COMPOSER} install -q --no-dev && \
     bin/compile ${VERSION} && \
     touch --date="`git log -n1 --pretty=%ci HEAD`" "builds/${BUILD_FILE}" && \
     git reset --hard -q ${VERSION} && \
     echo "${VERSION}" > "${ROOT}/${MODE_TARGET}/latest_new" && \
-    mv "builds/${BUILD_FILE}" "${ROOT}/${MODE_TARGET}/download/{VERSION}/${BUILD_FILE}" && \
+    mv "builds/${BUILD_FILE}" "${ROOT}/${MODE_TARGET}/download/${VERSION}/${BUILD_FILE}" && \
     mv "${ROOT}/${MODE_TARGET}/latest_new" "${ROOT}/${MODE_TARGET}/latest"
 
-    SNAPSHOT_VERSION=$(head -c40 "${ROOT}/${MODE_TARGET}/latest")
+    LATEST_VERSION="${VERSION}"
+    LATEST_BUILD="${VERSION}/${BUILD_FILE}"
   fi
 fi
 
@@ -96,18 +97,18 @@ if [ "stable" == "${MODE}" ]; then
       echo "${MODE_TARGET}/download/${VERSION}/${BUILD_FILE} has been built"
     fi
   done
-fi
 
-STABLE_VERSION=$(ls "${ROOT}/${MODE_TARGET}/download" --ignore snapshot | grep -E '^[0-9.]+$' | sort -r -V | head -1)
-STABLE_BUILD="${STABLE_VERSION}/${BUILD_FILE}"
+  LATEST_VERSION=$(ls "${ROOT}/${MODE_TARGET}/download" --ignore snapshot | grep -E '^[0-9.]+$' | sort -r -V | head -1)
+  LATEST_BUILD="${LATEST_VERSION}/${BUILD_FILE}"
+fi
 
 read -r -d '' versions << EOM
 {
-  "${MODE}": {"path": "/download/${STABLE_BUILD}", "version": "${STABLE_VERSION}", "min-php": 71300}
+  "${MODE}": {"path": "/download/${LATEST_BUILD}", "version": "${LATEST_VERSION}"}
 }
 EOM
 
-echo "${STABLE_VERSION}" > "${ROOT}/${MODE_TARGET}/latest"
+echo "${LATEST_VERSION}" > "${ROOT}/${MODE_TARGET}/latest"
 echo "${versions}" > "${ROOT}/${MODE_TARGET}/versions_new" && mv "${ROOT}/${MODE_TARGET}/versions_new" "${ROOT}/${MODE_TARGET}/versions"
 
 # empty checksum
@@ -115,7 +116,7 @@ CHECKSUM_FILE="${ROOT}/${MODE_TARGET}/checksum"
 > "${CHECKSUM_FILE}"
 
 # Create checksum for each file
-find "${ROOT}/${MODE_TARGET}" -name '*.phar' -print0 |
+find "${ROOT}/${MODE_TARGET}" -print0 |
   while IFS= read -r -d $'\0' FILE; do
     sha256sum "$FILE" >> "${CHECKSUM_FILE}"
   done
