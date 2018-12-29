@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "90869b8de51107258299adda7652ff8d",
+    "content-hash": "dc3756c97ab529394c3ffebf0e21516c",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -268,6 +268,43 @@
                 "whoops"
             ],
             "time": "2018-10-23T09:00:00+00:00"
+        },
+        {
+            "name": "hnhdigital-os/laravel-console-self-update",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hnhdigital-os/laravel-console-self-update.git",
+                "reference": "45f546928d46be6e35ab5a2da705398c70f55493"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/hnhdigital-os/laravel-console-self-update/zipball/45f546928d46be6e35ab5a2da705398c70f55493",
+                "reference": "45f546928d46be6e35ab5a2da705398c70f55493",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1.3"
+            },
+            "type": "project",
+            "autoload": {
+                "psr-4": {
+                    "HnhDigital\\LaravelConsoleSelfUpdate\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Rocco Howard",
+                    "email": "rocco@hnh.digital",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Provides a trait to use to self-update console binary.",
+            "time": "2018-12-29T12:33:22+00:00"
         },
         {
             "name": "hnhdigital-os/php-cli-helper",
@@ -4064,7 +4101,8 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "hnhdigital-os/php-cli-helper": 20
+        "hnhdigital-os/php-cli-helper": 20,
+        "hnhdigital-os/laravel-console-self-update": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
