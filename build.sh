@@ -107,12 +107,13 @@ echo "${LATEST_VERSION}" > "${ROOT}/${MODE_TARGET}/latest"
 versions_contents="{\n"
 
 while IFS= read -r -d "|" VERSION; do
-  versions_contents="${versions_contents}  \"${VERSION}\": {\"path\": \"/download/${VERSION}/mysql-helper\"}\n"
+  versions_contents="${versions_contents}  \"${VERSION}\": {\"path\": \"/download/${VERSION}/mysql-helper\"},\n"
 done <<< $(find "${ROOT}/${MODE_TARGET}/download" -maxdepth 1 -mindepth 1 -printf '%f|')
 
 versions_contents="${versions_contents}}"
 
 echo -e "${versions_contents}" > "${ROOT}/${MODE_TARGET}/versions"
+sed -i '1h;1!H;$!d;${s/.*//;x};s/\(.*\),/\1 /' "${ROOT}/${MODE_TARGET}/versions"
 
 # empty checksum
 CHECKSUM_FILE="${ROOT}/${MODE_TARGET}/checksum"
@@ -120,7 +121,7 @@ CHECKSUM_FILE="${ROOT}/${MODE_TARGET}/checksum"
 
 # Create checksum for each file
 # Create checksum for each file
-find "${ROOT}/${MODE_TARGET}/download" -print0 |
+find "${ROOT}/${MODE_TARGET}/download" -type f  -print0 |
   while IFS= read -r -d $'\0' FILE; do
     sha256sum "$FILE" >> "${CHECKSUM_FILE}"
   done
