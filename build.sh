@@ -90,7 +90,7 @@ if [ "stable" == "${MODE}" ]; then
       mkdir -p "${ROOT}/${MODE_TARGET}/download/${VERSION}/"
       git checkout ${VERSION} -q && \
       ${COMPOSER} install -q --no-dev && \
-      bin/compile stable && \
+      bin/compile stable ${VERSION} && \
       touch --date="`git log -n1 --pretty=%ci ${VERSION}`" "builds/${BUILD_FILE}" && \
       git reset --hard -q ${VERSION} && \
       mv "builds/${BUILD_FILE}" "${ROOT}/${MODE_TARGET}/download/${VERSION}/${BUILD_FILE}"
