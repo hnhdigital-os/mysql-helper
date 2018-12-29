@@ -102,21 +102,35 @@ if [ "stable" == "${MODE}" ]; then
   LATEST_BUILD="${LATEST_VERSION}/${BUILD_FILE}"
 fi
 
-read -r -d '' versions << EOM
+echo "${LATEST_VERSION}" > "${ROOT}/${MODE_TARGET}/latest"
+
+
+> "${ROOT}/${MODE_TARGET}/versions"
+
+read -r -d '' versions < EOM
 {
-  "${MODE}": {"path": "/download/${LATEST_BUILD}", "version": "${LATEST_VERSION}"}
+EOM
+
+find "${ROOT}/${MODE_TARGET}/download" -maxdepth 1 -mindepth 1 -printf '%f\n' |
+  while IFS= read -r -d $'\0' VERSION; do
+    read -r -d '' versions < EOM
+      "${VERSION}": {"path": "/download/${VERSION}/${BUILD_FILE}"}
+    EOM
+  done
+
+read -r -d '' versions < EOM
 }
 EOM
 
-echo "${LATEST_VERSION}" > "${ROOT}/${MODE_TARGET}/latest"
-echo "${versions}" > "${ROOT}/${MODE_TARGET}/versions_new" && mv "${ROOT}/${MODE_TARGET}/versions_new" "${ROOT}/${MODE_TARGET}/versions"
+echo "${versions}" > "${ROOT}/${MODE_TARGET}/versions"
 
 # empty checksum
 CHECKSUM_FILE="${ROOT}/${MODE_TARGET}/checksum"
 > "${CHECKSUM_FILE}"
 
 # Create checksum for each file
-find "${ROOT}/${MODE_TARGET}" -print0 |
+# Create checksum for each file
+find "${ROOT}/${MODE_TARGET}/download" -print0 |
   while IFS= read -r -d $'\0' FILE; do
     sha256sum "$FILE" >> "${CHECKSUM_FILE}"
   done
