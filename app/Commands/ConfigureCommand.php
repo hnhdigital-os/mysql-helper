@@ -8,7 +8,7 @@ use HnhDigital\CliHelper\CommandInternalsTrait;
 use HnhDigital\CliHelper\FileSystemTrait;
 use LaravelZero\Framework\Commands\Command;
 
-class ProfileCommand extends Command
+class ConfigureCommand extends Command
 {
     use CommandInternalsTrait, FileSystemTrait, SharedTrait;
 
@@ -17,14 +17,14 @@ class ProfileCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'profile';
+    protected $signature = 'configure';
 
     /**
      * The description of the command.
      *
      * @var string
      */
-    protected $description = 'Configure profiles to be used to manage mysql databases';
+    protected $description = 'Configure profiles and connections';
 
     /**
      * Profiles.
@@ -248,6 +248,7 @@ class ProfileCommand extends Command
                 $binary_exists_stream = ssh2_exec($connection, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
                 stream_set_blocking($binary_exists_stream, true); 
                 $binary_exists = !(boolean) stream_get_contents($binary_exists_stream);
+                fclose($binary_exists_stream);
  
                 if (!$binary_exists) {
                     $this->error(sprintf(' ❌ mysql-helper binary does not exist', $name));
