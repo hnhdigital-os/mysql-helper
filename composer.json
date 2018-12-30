@@ -17,8 +17,8 @@
     ],
     "require": {
         "php": "^7.1.3",
-        "hnhdigital-os/laravel-console-self-update": "dev-master",
-        "hnhdigital-os/php-cli-helper": "dev-master",
+        "hnhdigital-os/laravel-console-self-update": "^1.0",
+        "hnhdigital-os/php-cli-helper": "^1.0",
         "illuminate/database": "5.7.*",
         "laravel-zero/framework": "5.7.*",
         "symfony/process": "^4.2",

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "fc8ff305f05b590659eda08abc3cdc45",
+    "content-hash": "e488db8cc185dcb04510fef9de354c39",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -271,16 +271,16 @@
         },
         {
             "name": "hnhdigital-os/laravel-console-self-update",
-            "version": "dev-master",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hnhdigital-os/laravel-console-self-update.git",
-                "reference": "bb64c75c78fa70e6cd45c494f3ee5c59c50f202d"
+                "reference": "b230bb2131972465a97ce61f410c3dcf7814893e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hnhdigital-os/laravel-console-self-update/zipball/bb64c75c78fa70e6cd45c494f3ee5c59c50f202d",
-                "reference": "bb64c75c78fa70e6cd45c494f3ee5c59c50f202d",
+                "url": "https://api.github.com/repos/hnhdigital-os/laravel-console-self-update/zipball/b230bb2131972465a97ce61f410c3dcf7814893e",
+                "reference": "b230bb2131972465a97ce61f410c3dcf7814893e",
                 "shasum": ""
             },
             "require": {
@@ -304,20 +304,20 @@
                 }
             ],
             "description": "Provides a trait to use to self-update console binary.",
-            "time": "2018-12-30T13:10:27+00:00"
+            "time": "2018-12-30T14:13:47+00:00"
         },
         {
             "name": "hnhdigital-os/php-cli-helper",
-            "version": "dev-master",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/hnhdigital-os/php-cli-helper.git",
-                "reference": "c36fdcc96581d1f9a3e9ed2a7da9f846627ad469"
+                "reference": "11dad5ab8ee4650676003669134bdde97f53bb54"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hnhdigital-os/php-cli-helper/zipball/c36fdcc96581d1f9a3e9ed2a7da9f846627ad469",
-                "reference": "c36fdcc96581d1f9a3e9ed2a7da9f846627ad469",
+                "url": "https://api.github.com/repos/hnhdigital-os/php-cli-helper/zipball/11dad5ab8ee4650676003669134bdde97f53bb54",
+                "reference": "11dad5ab8ee4650676003669134bdde97f53bb54",
                 "shasum": ""
             },
             "require": {
@@ -342,7 +342,7 @@
                 }
             ],
             "description": "Provides various simple bash commands.",
-            "time": "2018-12-30T10:48:42+00:00"
+            "time": "2018-12-30T23:08:58+00:00"
         },
         {
             "name": "illuminate/cache",
@@ -4150,10 +4150,7 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {
-        "hnhdigital-os/laravel-console-self-update": 20,
-        "hnhdigital-os/php-cli-helper": 20
-    },
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
