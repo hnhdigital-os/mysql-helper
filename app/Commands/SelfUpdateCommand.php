@@ -36,7 +36,7 @@ class SelfUpdateCommand extends Command
 
         $url = config('app.update-url');
 
-        if ($this->release !== 'stable') {
+        if ($this->release !== 'stable' && $this->release !== 'RELEASE') {
             $url .= '/'.$this->release;
         }
 
