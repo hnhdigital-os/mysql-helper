@@ -76,6 +76,7 @@ return [
     'remove' => [
         Illuminate\Console\Scheduling\ScheduleRunCommand::class,
         Illuminate\Foundation\Console\VendorPublishCommand::class,
+        Illuminate\Database\Console\Migrations\MigrateCommand::class,
         Illuminate\Database\Console\Migrations\FreshCommand::class,
         Illuminate\Database\Console\Migrations\InstallCommand::class,
         Illuminate\Database\Console\Migrations\RefreshCommand::class,
