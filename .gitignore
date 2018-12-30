@@ -5,3 +5,4 @@
 /database/database.sqlite
 /builds
 /build-src
+.env

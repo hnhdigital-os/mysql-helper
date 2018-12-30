@@ -34,7 +34,7 @@ class SelfUpdateCommand extends Command
     {
         $this->parseVersion();
 
-        $url = 'https://hnhdigital-os.github.io/mysql-helper';
+        $url = env('UPDATE_URL');
 
         if ($this->release !== 'stable') {
             $url .= '/'.$this->release;
