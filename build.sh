@@ -137,6 +137,7 @@ printf "{\n" > "${TEMP_CHECKSUM_FILE}"
 awk '{ print "\t\"" $2 "\": " "\"" $1 "\", " }' "${CHECKSUM_FILE}" >> "${TEMP_CHECKSUM_FILE}"
 printf "}\n" >> "${TEMP_CHECKSUM_FILE}"
 sed -i '1h;1!H;$!d;${s/.*//;x};s/\(.*\),/\1 /' "${TEMP_CHECKSUM_FILE}"
+sed -i 's/\/download/download/g' "${TEMP_CHECKSUM_FILE}"
 
 cat "${TEMP_CHECKSUM_FILE}" > "${CHECKSUM_FILE}"
 
