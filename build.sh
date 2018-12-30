@@ -61,6 +61,8 @@ git submodule update --remote
 
 mkdir -p "${ROOT}/${BUILD}/builds"
 
+/bin/cp -f "${ROOT}/.env" "${ROOT}/${BUILD}/.env"
+
 touch "${ROOT}/${MODE_TARGET}/latest"
 
 # create latest non-stable version
