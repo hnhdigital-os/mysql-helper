@@ -32,10 +32,12 @@ class SelfUpdateCommand extends Command
      */
     public function handle()
     {
+        $this->parseVersion();
+
         $url = 'https://hnhdigital-os.github.io/mysql-helper';
 
-        if (stripos(config('app.version'), 'stable') === false) {
-            $url .= '/dev';
+        if ($this->release !== 'stable') {
+            $url .= '/'.$this->release;
         }
 
         $this->setUrl($url);
