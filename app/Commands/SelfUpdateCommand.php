@@ -34,7 +34,7 @@ class SelfUpdateCommand extends Command
     {
         $this->parseVersion();
 
-        $url = env('UPDATE_URL');
+        $url = config('update-url');
 
         if ($this->release !== 'stable') {
             $url .= '/'.$this->release;
