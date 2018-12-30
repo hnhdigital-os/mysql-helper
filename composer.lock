@@ -275,12 +275,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/hnhdigital-os/laravel-console-self-update.git",
-                "reference": "55d35dd42ef31eaeb5cdedf44f6fe95dba1db001"
+                "reference": "653f44b3f87e33acd77b7a197f16dcb5024c2f79"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/hnhdigital-os/laravel-console-self-update/zipball/55d35dd42ef31eaeb5cdedf44f6fe95dba1db001",
-                "reference": "55d35dd42ef31eaeb5cdedf44f6fe95dba1db001",
+                "url": "https://api.github.com/repos/hnhdigital-os/laravel-console-self-update/zipball/653f44b3f87e33acd77b7a197f16dcb5024c2f79",
+                "reference": "653f44b3f87e33acd77b7a197f16dcb5024c2f79",
                 "shasum": ""
             },
             "require": {
@@ -304,7 +304,7 @@
                 }
             ],
             "description": "Provides a trait to use to self-update console binary.",
-            "time": "2018-12-29T14:25:00+00:00"
+            "time": "2018-12-30T05:23:05+00:00"
         },
         {
             "name": "hnhdigital-os/php-cli-helper",
