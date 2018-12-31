@@ -39,6 +39,9 @@ class RestoreCommand extends Command
      * Execute the console command.
      *
      * @return mixed
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function handle()
     {
@@ -69,14 +72,14 @@ class RestoreCommand extends Command
             $this->error('Invalid connection profile supplied.');
 
             return 1;
-        } else {
+        } elseif (!empty($connection)) {
             $this->loadDatabaseConnections($profile);
         }
 
         // Select database.
         if (empty($database = $this->option('database'))) {
             $database = $this->selectDatabase($profile, $connection);
-        } else {
+        } elseif (!empty($database)) {
             config(['database.connections.'.$connection.'.database' => $database]);
 
             try {
@@ -93,7 +96,7 @@ class RestoreCommand extends Command
 
         // Backup the current database before restoring.
         if ($backup_first) {
-            $exit_code = Artisan::call('backup', [
+            Artisan::call('backup', [
                 '--profile'     => $profile,
                 '--connection'  => $connection,
                 '--database'    => $database,
@@ -153,7 +156,7 @@ class RestoreCommand extends Command
     {
         $menu_options = [];
 
-        foreach ($this->profiles as $name => $profile_data) {
+        foreach (array_keys($this->profiles) as $name) {
             $menu_options[$name] = strtoupper($name);
         }
 
@@ -171,7 +174,7 @@ class RestoreCommand extends Command
     {
         $menu_options = [];
 
-        foreach (array_get($this->profiles, $profile.'.local', []) as $name => $connection_detail) {
+        foreach (array_keys(array_get($this->profiles, $profile.'.local', [])) as $name) {
             $menu_options[$name] = strtoupper($name);
         }
 
@@ -187,7 +190,7 @@ class RestoreCommand extends Command
      *
      * @return string
      */
-    private function selectDatabase($profile, $connection, $database = false)
+    private function selectDatabase($profile, $connection, $database = null)
     {
         config(['database.connections.'.$connection.'.database' => '']);
         DB::connection($connection)->reconnect();
@@ -205,18 +208,18 @@ class RestoreCommand extends Command
 
         $option = false;
 
-        if ($database === false) {
+        if (is_null($database)) {
             $option = $this->menu('Select database', $databases)->open();
         }
 
         // Use supplied database name.
-        if ($database !== false && !in_array($database, $available_databases)) {
+        if (!is_null($database) && !in_array($database, $available_databases)) {
             $option = $database;
         }
 
         // Specify database.
         if ($option == 'new') {
-            $option = $this->createNewDatabase($profile, $connection, $available_databases);
+            $option = $this->createNewDatabase($profile, $connection);
         }
 
         // Set the database on the connection.
@@ -230,7 +233,7 @@ class RestoreCommand extends Command
      *
      * @return void
      */
-    private function createNewDatabase($profile, $connection, $available_databases)
+    private function createNewDatabase($profile, $connection)
     {
         $database = $this->ask('Provide the database name');
 
@@ -247,6 +250,8 @@ class RestoreCommand extends Command
      * Run restore.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     private function runRestore($profile, $connection, $sql_path, $database)
     {
@@ -259,7 +264,6 @@ class RestoreCommand extends Command
         // Check we want to proceed.
         if (!$this->option('--force')
             && !$this->confirm('Did you want to proceed?')) {
-
             return 0;
         }
 
@@ -286,11 +290,15 @@ class RestoreCommand extends Command
                 $this->error('Source contains multiple files.');
 
                 return 1;
-            } else {
+            } elseif ($zip->numFiles == 1) {
                 $this->line(' Extracting...');
                 $this->line('');
                 $sql_path .= '_extracted.sql';
                 file_put_contents($sql_path, $zip->getFromIndex(0));
+            } elseif ($zip->numFiles == 0) {
+                $this->error('No files can be extracted.');
+
+                return 1;
             }
 
             $zip->close();

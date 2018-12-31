@@ -8,6 +8,12 @@ use HnhDigital\CliHelper\CommandInternalsTrait;
 use HnhDigital\CliHelper\FileSystemTrait;
 use LaravelZero\Framework\Commands\Command;
 
+/**
+ * This will suppress all the PMD warnings in
+ * this class.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ */
 class ConfigureCommand extends Command
 {
     use CommandInternalsTrait, FileSystemTrait, SharedTrait;
@@ -54,7 +60,7 @@ class ConfigureCommand extends Command
 
         $this->loadExistingProfiles();
 
-        foreach ($this->profiles as $name => $profile_data) {
+        foreach (array_keys($this->profiles) as $name) {
             $profiles[$name] = strtoupper($name);
         }
 
@@ -68,7 +74,7 @@ class ConfigureCommand extends Command
 
         // Exit invoked.
         if (is_null($option)) {
-            exit(0);
+            return 0;
         }
 
         return $this->configureProfile($option);
@@ -229,46 +235,19 @@ class ConfigureCommand extends Command
             return $this->updateRemoteProfile($profile, $name);
         }
 
-        try {
-            $connection = ssh2_connect(array_get($data, 'host', ''), array_get($data, 'port', 22));
-            $auth = ssh2_auth_pubkey_file(
-                $connection,
-                array_get($data, 'username', ''),
-                $public_key,
-                $private_key
-            );
-
-            // Connection failed.
-            if (!$connection) {
-                $this->error(sprintf(' Connection %s failed ❌', $name));
-            } else {
-                $this->info(sprintf(' ✔️ Connection successful', $name));
-
-                // Check binary exists.
-                $stdio_stream = ssh2_exec($connection, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
-                stream_set_blocking($stdio_stream, true);
-                $binary_exists = !(boolean) stream_get_contents($stdio_stream);
-                fclose($stdio_stream);
- 
-                if (!$binary_exists) {
-                    $this->error(sprintf(' ❌ mysql-helper binary does not exist', $name));
-                } else {
-                    $this->info(sprintf(' ✔ mysql-helper binary exists', $name));
-                    $connection_works = true;
-                }
-
-                ssh2_disconnect($connection);
-            }
-
-        } catch (\Exception $e) {
-            $this->error(sprintf('%s.', $e->getMessage()));
-        }
+        // Test connenction.
+        $connection_works = $this->sshConnect(
+            array_get($data, 'host', ''),
+            array_get($data, 'port', 22),
+            array_get($data, 'username', ''),
+            $public_key,
+            $private_key
+        );
 
         array_set($this->profiles, $profile.'.remote.'.$name.'.working', $connection_works);
         $this->saveProfile($profile, 'remote');
 
         if (!$connection_works) {
-
             if ($this->confirm('Test again?')) {
                 return $this->testRemoteProfile($profile, $name);
             }
@@ -279,6 +258,61 @@ class ConfigureCommand extends Command
         $this->ask('Press any key to continue');
 
         return $this->updateRemoteProfile($profile, $name);
+    }
+
+    /**
+     * Make the SSH connection and test the binary exists.
+     *
+     * @param string $host
+     * @param string $port
+     * @param string $username
+     * @param string $public_key
+     * @param string $private_key
+     *
+     * @return bool
+     */
+    private function sshConnect($host, $port, $username, $public_key, $private_key)
+    {
+        try {
+            $connection = ssh2_connect($host, $port);
+
+            ssh2_auth_pubkey_file(
+                $connection,
+                $username,
+                $public_key,
+                $private_key
+            );
+
+            // Connection failed.
+            if (!$connection) {
+                $this->error(sprintf(' Connection %s failed ❌', $name));
+
+                return false;
+            }
+
+            $this->info(sprintf(' ✔️ Connection successful', $name));
+
+            // Check binary exists.
+            $stdio_stream = ssh2_exec($connection, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
+            stream_set_blocking($stdio_stream, true);
+
+            $binary_exists = !(boolean) stream_get_contents($stdio_stream);
+
+            fclose($stdio_stream);
+            ssh2_disconnect($connection);
+
+            if (!$binary_exists) {
+                $this->error(sprintf(' ❌ mysql-helper binary does not exist', $name));
+
+                return false;
+            }
+
+            $this->info(sprintf(' ✔ mysql-helper binary exists', $name));
+
+            return true;
+        } catch (\Exception $e) {
+            $this->error(sprintf('%s.', $e->getMessage()));
+        }
     }
 
     /**
@@ -306,10 +340,14 @@ class ConfigureCommand extends Command
             }
 
             break;
-        }        
+        }
 
         // Create new entry.
-        array_set($this->profiles, $profile.'.remote.'.$new_name, array_get($this->profiles, $profile.'.remote.'.$name));
+        array_set(
+            $this->profiles,
+            $profile.'.remote.'.$new_name,
+            array_get($this->profiles, $profile.'.remote.'.$name)
+        );
 
         // Remove old entry.
         unset($this->profiles[$profile]['remote'][$name]);
@@ -510,7 +548,7 @@ class ConfigureCommand extends Command
             }
 
             break;
-        }        
+        }
 
         // Create new entry.
         array_set($this->profiles, $profile.'.local.'.$new_name, array_get($this->profiles, $profile.'.local.'.$name));
@@ -578,6 +616,8 @@ class ConfigureCommand extends Command
      * Create local profile.
      *
      * @return void
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      */
     private function createLocalProfile($profile)
     {

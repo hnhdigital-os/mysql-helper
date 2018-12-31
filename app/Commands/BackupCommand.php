@@ -56,14 +56,14 @@ class BackupCommand extends Command
             $this->error('Invalid connection profile supplied.');
 
             return 1;
-        } else {
+        } elseif (!empty($connection)) {
             $this->loadDatabaseConnections($profile);
         }
 
         // Select database.
         if (empty($database = $this->option('database'))) {
-            $database = $this->selectDatabase($profile, $connection);
-        } else {
+            $database = $this->selectDatabase($connection);
+        } elseif (!empty($database)) {
             config(['database.connections.'.$connection.'.database' => $database]);
 
             try {
@@ -87,7 +87,7 @@ class BackupCommand extends Command
     {
         $menu_options = [];
 
-        foreach ($this->profiles as $name => $profile_data) {
+        foreach (array_keys($this->profiles) as $name) {
             $menu_options[$name] = strtoupper($name);
         }
 
@@ -105,7 +105,7 @@ class BackupCommand extends Command
     {
         $menu_options = [];
 
-        foreach (array_get($this->profiles, $profile.'.local', []) as $name => $connection_detail) {
+        foreach (array_keys(array_get($this->profiles, $profile.'.local', [])) as $name) {
             $menu_options[$name] = strtoupper($name);
         }
 
@@ -121,7 +121,7 @@ class BackupCommand extends Command
      *
      * @return string
      */
-    private function selectDatabase($profile, $connection)
+    private function selectDatabase($connection)
     {
         $databases = [];
 
@@ -166,9 +166,15 @@ class BackupCommand extends Command
             $progress_cmd = sprintf(' | pv --progress --size "%sm"', $size);
         }
 
+        $mysqldump_cmd = 'export MYSQL_PWD=%s;';
+        $mysqldump_cmd .= ' mysqldump --user=%s';
+        $mysqldump_cmd .= ' --compress --complete-insert --disable-keys --quick';
+        $mysqldump_cmd .= ' --single-transaction --add-drop-table --add-drop-table';
+        $mysqldump_cmd .= ' %s %s > "%s"';
+
         // Run the mysql dump.
         exec(sprintf(
-            'export MYSQL_PWD=%s; mysqldump --user=%s --compress --complete-insert --disable-keys --quick --single-transaction --add-drop-table --add-drop-table %s %s > "%s"',
+            $mysqldump_cmd,
             array_get($this->profiles, $profile.'.local.'.$connection.'.password'),
             array_get($this->profiles, $profile.'.local.'.$connection.'.username'),
             $database,
