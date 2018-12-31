@@ -2,10 +2,8 @@
 
 namespace App\Commands;
 
-use LaravelZero\Framework\Commands\Command;
 use HnhDigital\CliHelper\SoftwareTrait;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
+use LaravelZero\Framework\Commands\Command;
 
 class InstallCommand extends Command
 {

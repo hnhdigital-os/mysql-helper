@@ -127,14 +127,14 @@ class RestoreCommand extends Command
 
         // Select the source database.
         $selected_database = $this->menu('Select source database', $menu_options)->open();
-    
+
         $restore_files = glob($restore_file_path.'/'.$selected_database.'/*.zip');
 
         $menu_options = [];
 
         foreach ($restore_files as $path) {
             $date = Carbon::createFromFormat('Y-m-d-H-i-s', pathinfo($path, PATHINFO_FILENAME));
-            $menu_options[$path] = (string)$date;
+            $menu_options[$path] = (string) $date;
         }
 
         krsort($menu_options);
@@ -196,7 +196,7 @@ class RestoreCommand extends Command
         DB::connection($connection)->reconnect();
 
         $databases = [
-            'new' => 'NEW DATABASE'
+            'new' => 'NEW DATABASE',
         ];
 
         $available_databases = DB::connection($connection)

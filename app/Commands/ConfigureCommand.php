@@ -296,7 +296,7 @@ class ConfigureCommand extends Command
             $stdio_stream = ssh2_exec($connection, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
             stream_set_blocking($stdio_stream, true);
 
-            $binary_exists = !(boolean) stream_get_contents($stdio_stream);
+            $binary_exists = !(bool) stream_get_contents($stdio_stream);
 
             fclose($stdio_stream);
             ssh2_disconnect($connection);
@@ -610,7 +610,6 @@ class ConfigureCommand extends Command
 
         return $this->updateLocalProfile($profile, $name);
     }
-
 
     /**
      * Create local profile.
