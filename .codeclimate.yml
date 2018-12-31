@@ -1,0 +1,32 @@
+version: "2"
+checks:
+  similar-code:
+    enabled: true
+    config:
+      languages:
+      - php
+  identical-code:
+    enabled: true
+    config:
+      languages:
+      - php
+plugins:
+  phpcodesniffer:
+    enabled: true
+  fixme:
+    enabled: true
+  phpmd:
+    enabled: true
+    checks:
+      Controversial/CamelCaseParameterName:
+        enabled: false
+      Controversial/CamelCaseVariableName:
+        enabled: false
+      Controversial/CamelCasePropertyName:
+        enabled: false
+      CleanCode/StaticAccess:
+        enabled: false
+      Naming/ShortMethodName:
+        enabled: false
+exclude_patterns:
+- "tests/"

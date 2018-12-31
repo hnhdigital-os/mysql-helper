@@ -13,6 +13,10 @@
 
 Provides a helper to sync, clone, and backup local and remote databases.
 
+[![Latest Stable Version](https://poser.pugx.org/hnhdigital-os/mysql-helper/v/stable.svg)](https://packagist.org/packages/hnhdigital-os/mysql-helper) [![Latest Unstable Version](https://poser.pugx.org/hnhdigital-os/mysql-helper/v/unstable.svg)](https://packagist.org/packages/hnhdigital-os/mysql-helper) [![License](https://poser.pugx.org/hnhdigital-os/mysql-helper/license.svg)](https://packagist.org/packages/hnhdigital-os/mysql-helper) [![Donate to this project using Patreon](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://patreon.com/RoccoHoward)
+
+[![Build Status](https://travis-ci.org/hnhdigital-os/mysql-helper.svg?branch=master)](https://travis-ci.org/hnhdigital-os/mysql-helper) [![StyleCI](https://styleci.io/repos/162653021/shield?branch=master)](https://styleci.io/repos/162653021) [![Test Coverage](https://codeclimate.com/github/hnhdigital-os/mysql-helper/badges/coverage.svg)](https://codeclimate.com/github/hnhdigital-os/mysql-helper/coverage) [![Issue Count](https://codeclimate.com/github/hnhdigital-os/mysql-helper/badges/issue_count.svg)](https://codeclimate.com/github/hnhdigital-os/mysql-helper) [![Code Climate](https://codeclimate.com/github/hnhdigital-os/mysql-helper/badges/gpa.svg)](https://codeclimate.com/github/hnhdigital-os/mysql-helper)
+
 This package has been developed by H&H|Digital, an Australian botique developer. Visit us at hnh.digital.
 
 ## Requirements
