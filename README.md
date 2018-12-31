@@ -1,4 +1,3 @@
-
 ```
                            _        _          _
                           | |      | |        | |
@@ -8,12 +7,11 @@
 |_| |_| |_|\__, |___/\__, |_|      |_| |_|\___|_| .__/ \___|_|
             __/ |       | |                     | |
            |___/        |_|                     |_|
-
 ```
 
 Provides a helper to sync, clone, and backup local and remote databases.
 
-[![Latest Stable Version](https://img.shields.io/github/release/hnhdigital-os/mysql-helper.svg) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Donate to this project using Patreon](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://patreon.com/RoccoHoward)
+[![Latest Stable Version](https://img.shields.io/github/release/hnhdigital-os/mysql-helper.svg)](https://travis-ci.org/hnhdigital-os/mysql-helper) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Donate to this project using Patreon](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://patreon.com/RoccoHoward)
 
 [![Build Status](https://travis-ci.org/hnhdigital-os/mysql-helper.svg?branch=master)](https://travis-ci.org/hnhdigital-os/mysql-helper) [![StyleCI](https://styleci.io/repos/162653021/shield?branch=master)](https://styleci.io/repos/162653021) [![Test Coverage](https://codeclimate.com/github/hnhdigital-os/mysql-helper/badges/coverage.svg)](https://codeclimate.com/github/hnhdigital-os/mysql-helper/coverage) [![Issue Count](https://codeclimate.com/github/hnhdigital-os/mysql-helper/badges/issue_count.svg)](https://codeclimate.com/github/hnhdigital-os/mysql-helper) [![Code Climate](https://codeclimate.com/github/hnhdigital-os/mysql-helper/badges/gpa.svg)](https://codeclimate.com/github/hnhdigital-os/mysql-helper)
 
