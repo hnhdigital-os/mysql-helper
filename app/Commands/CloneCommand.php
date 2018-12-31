@@ -53,6 +53,9 @@ class CloneCommand extends Command
      * Execute the console command.
      *
      * @return int
+     *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function handle()
     {
@@ -178,12 +181,12 @@ class CloneCommand extends Command
     private function selectDatabase($profile, $connection, $type)
     {
         switch ($type) {
-             case self::DATABASE_TYPE_DESTINATION:
-                 $title = 'Select destination database';
-                 break;
-             case self::DATABASE_TYPE_SOURCE:
-                 $title = 'Select source database';
-                 break;  
+            case self::DATABASE_TYPE_DESTINATION:
+                $title = 'Select destination database';
+                break;
+            case self::DATABASE_TYPE_SOURCE:
+                $title = 'Select source database';
+                break;
         }
 
         $databases = [];
@@ -250,6 +253,8 @@ class CloneCommand extends Command
         $backup_cmd = $this->getBinaryPath();
         $backup_cmd .= ' backup --profile=%s --connection=%s --database=%s';
 
+        $output = [];
+
         $backup_path = exec(sprintf(
             $backup_cmd,
             $profile,
@@ -295,6 +300,8 @@ class CloneCommand extends Command
      * Get binary path.
      *
      * @return string
+     *
+     * @SuppressWarnings(PHPMD.Superglobals)
      */
     private function getBinaryPath()
     {
