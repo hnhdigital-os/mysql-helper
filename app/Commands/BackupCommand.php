@@ -64,18 +64,38 @@ class BackupCommand extends Command
         if (empty($database = $this->option('database'))) {
             $database = $this->selectDatabase($connection);
         } elseif (!empty($database)) {
-            config(['database.connections.'.$connection.'.database' => $database]);
-
-            try {
-                DB::connection($connection)->select('show tables');
-            } catch (\Exception $e) {
-                $this->error($e->getMessage());
+            if (!$this->checkDatabaseExists($connection, $database)) {
+                $this->error(sprintf('%s does not exist.', $database));
 
                 return 1;
             }
         }
 
         return $this->runBackup($profile, $connection, $database);
+    }
+
+    /**
+     * Check database exists.
+     *
+     * @param string $database
+     *
+     * @return bool
+     */
+    private function checkDatabaseExists($connection, $database)
+    {
+        config(['database.connections.'.$connection.'.database' => '']);
+        DB::connection($connection)->reconnect();
+
+        $available_databases = DB::connection($connection)
+            ->select('SHOW DATABASES');
+
+        foreach ($available_databases as $db) {
+            if ($db->Database === $database) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -123,10 +143,13 @@ class BackupCommand extends Command
      */
     private function selectDatabase($connection)
     {
+        config(['database.connections.'.$connection.'.database' => '']);
+        DB::connection($connection)->reconnect();
+
         $databases = [];
 
         $available_databases = DB::connection($connection)
-            ->select('show databases');
+            ->select('SHOW DATABASES');
 
         foreach ($available_databases as $database) {
             $databases[$database->Database] = $database->Database;
@@ -148,8 +171,6 @@ class BackupCommand extends Command
     {
         $backup_file_path = $this->getConfigPath(sprintf('backups/%s/%s', $profile, $database)).'/'.date('Y-m-d-H-i-s');
 
-        $this->line('');
-
         // Display status of the backup progress.
         $progress_cmd = '';
         if (!$this->option('no-progress')) {
@@ -163,6 +184,11 @@ class BackupCommand extends Command
 
             // Get value and set to 65% compression.
             $size = round(object_get(array_get($size_result, '0'), 'size') * 0.65, 0);
+
+            if (empty($size)) {
+                $size = 1;
+            }
+
             $progress_cmd = sprintf(' | pv --progress --size "%sm"', $size);
         }
 
@@ -186,14 +212,17 @@ class BackupCommand extends Command
             return 1;
         }
 
-        $this->line('');
+        copy($backup_file_path.'.sql', $backup_file_path.'.temp.sql');
 
         // Remove definer sections as it breaks restores.
         exec(sprintf(
             "perl -pe 's/\sDEFINER=`[^`]+`@`[^`]+`//' < \"%s\" > \"%s\"",
-            $backup_file_path.'.sql',
+            $backup_file_path.'.temp.sql',
             $backup_file_path.'.sql'
         ));
+
+        // Remove sql file.
+        unlink($backup_file_path.'.temp.sql');
 
         // Create ZIP of given sql file.
         $zip = new ZipArchive();
