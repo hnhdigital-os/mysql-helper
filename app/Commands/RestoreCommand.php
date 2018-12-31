@@ -26,7 +26,7 @@ class RestoreCommand extends Command
                             {--connection=0 : Local connection}
                             {--database=0 : Database}
                             {--backup=-1 : Backup before restoring}
-                            {--force=-1 : Don\'t ask questions}';
+                            {--force=-1 : Disable being interactive}';
 
     /**
      * The description of the command.
@@ -79,14 +79,6 @@ class RestoreCommand extends Command
         // Select database.
         if (empty($database = $this->option('database'))) {
             $database = $this->selectDatabase($profile, $connection);
-        } elseif (!empty($database)) {
-            config(['database.connections.'.$connection.'.database' => $database]);
-
-            try {
-                DB::connection($connection)->select('SHOW TABLES');
-            } catch (\Exception $e) {
-                $this->selectDatabase($profile, $connection, $database);
-            }
         }
 
         // Check if we need to backup the current database.
@@ -262,7 +254,7 @@ class RestoreCommand extends Command
         $this->info(sprintf(' %s', $database));
 
         // Check we want to proceed.
-        if (!$this->option('--force')
+        if (!$this->option('force')
             && !$this->confirm('Did you want to proceed?')) {
             return 0;
         }
@@ -306,7 +298,7 @@ class RestoreCommand extends Command
 
         // Drop database (so triggers etc are removed).
         DB::connection($connection)
-            ->select(sprintf('DROP DATABASE %s', $database));
+            ->select(sprintf('DROP DATABASE IF EXISTS %s', $database));
 
         // Re-create database.
         DB::connection($connection)
