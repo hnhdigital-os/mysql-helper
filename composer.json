@@ -1,18 +1,18 @@
 {
-    "name": "laravel-zero/laravel-zero",
-    "description": "The Laravel Zero Framework.",
-    "keywords": ["framework", "laravel", "laravel zero", "console", "cli"],
-    "homepage": "https://laravel-zero.com",
+    "name": "hnhdigital-os/mysql-helper",
+    "description": "Provides a helper to sync, clone, and backup local & remote databases.",
+    "keywords": ["mysql", "backup", "clone", "console", "cli"],
+    "homepage": "https://hnhdigital-os.github.io/mysql-helper",
     "type": "project",
     "license": "MIT",
     "support": {
-        "issues": "https://github.com/laravel-zero/laravel-zero/issues",
-        "source": "https://github.com/laravel-zero/laravel-zero"
+        "issues": "https://github.com/hnhdigital-os/mysql-helper/issues",
+        "source": "https://github.com/hnhdigital-os/mysql-helper"
     },
     "authors": [
         {
-            "name": "Nuno Maduro",
-            "email": "enunomaduro@gmail.com"
+            "name": "Rocco Howard",
+            "email": "rocco@hnh.digital"
         }
     ],
     "require": {
