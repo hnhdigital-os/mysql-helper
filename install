@@ -8,8 +8,6 @@ VERSION=$(curl -Ls https://hnhdigital-os.github.io/mysql-helper/latest)
 
 sudo curl -o /usr/local/bin/mysql-helper "https://hnhdigital-os.github.io/mysql-helper/download/${VERSION}/mysql-helper" && sudo chmod 755 /usr/local/bin/mysql-helper
 
-/usr/local/bin/mysql-helper install
-
 echo ""
 echo "Installation complete."
 echo ""
