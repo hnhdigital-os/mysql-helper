@@ -285,29 +285,29 @@ class ConfigureCommand extends Command
 
             // Connection failed.
             if (!$connection) {
-                $this->error(sprintf(' Connection %s failed ❌', $name));
+                $this->error(' Connection %s failed ❌');
 
                 return false;
             }
 
-            $this->info(sprintf(' ✔️ Connection successful', $name));
+            $this->info(' ✔️ Connection successful');
 
             // Check binary exists.
-            $stdio_stream = ssh2_exec($connection, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
-            stream_set_blocking($stdio_stream, true);
+            $stream = ssh2_exec($connection, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
+            stream_set_blocking($stream, true);
 
-            $binary_exists = !(bool) stream_get_contents($stdio_stream);
+            $binary_exists = !(bool) intval(stream_get_contents($stream));
 
-            fclose($stdio_stream);
+            fclose($stream);
             ssh2_disconnect($connection);
 
             if (!$binary_exists) {
-                $this->error(sprintf(' ❌ mysql-helper binary does not exist', $name));
+                $this->error(' ❌ mysql-helper binary does not exist');
 
                 return false;
             }
 
-            $this->info(sprintf(' ✔ mysql-helper binary exists', $name));
+            $this->info(' ✔ mysql-helper binary exists');
 
             return true;
         } catch (\Exception $e) {
