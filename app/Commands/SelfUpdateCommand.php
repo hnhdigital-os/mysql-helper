@@ -2,10 +2,11 @@
 
 namespace App\Commands;
 
+use HnhDigital\LaravelConsoleSelfUpdate\SelfUpdateInterface;
 use HnhDigital\LaravelConsoleSelfUpdate\SelfUpdateTrait;
 use LaravelZero\Framework\Commands\Command;
 
-class SelfUpdateCommand extends Command
+class SelfUpdateCommand extends Command implements SelfUpdateInterface
 {
     use SelfUpdateTrait;
 
@@ -32,12 +33,16 @@ class SelfUpdateCommand extends Command
      */
     public function handle()
     {
-        $this->parseVersion();
+        $this->setVersionsTagKey('path');
+        $this->setHashSource(SelfUpdateInterface::CHECKSUM_TOP_LEVEL);
+        $this->setHashPath('checksum');
+
+        list($release, $tag) = $this->parseVersion(config('app.version'));
 
         $url = config('app.update-url');
 
-        if ($this->release !== 'stable' && $this->release !== 'RELEASE') {
-            $url .= '/'.$this->release;
+        if ($release !== 'stable' && $release !== 'RELEASE') {
+            $url .= '/'.$release;
         }
 
         $this->setUrl($url);
