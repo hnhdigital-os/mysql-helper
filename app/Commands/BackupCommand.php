@@ -192,8 +192,8 @@ class BackupCommand extends Command
             $progress_cmd = sprintf(' | pv --progress --size "%sm"', $size);
         }
 
-        $mysqldump_cmd = 'export MYSQL_PWD=%s;';
-        $mysqldump_cmd .= ' mysqldump --user=%s';
+        $mysqldump_cmd = 'export MYSQL_PWD="%s";';
+        $mysqldump_cmd .= ' mysqldump --host=%s --user=%s';
         $mysqldump_cmd .= ' --compress --complete-insert --disable-keys --quick';
         $mysqldump_cmd .= ' --single-transaction --add-drop-table --add-drop-table';
         $mysqldump_cmd .= ' %s %s > "%s"';
@@ -202,6 +202,7 @@ class BackupCommand extends Command
         exec(sprintf(
             $mysqldump_cmd,
             array_get($this->profiles, $profile.'.local.'.$connection.'.password'),
+            array_get($this->profiles, $profile.'.local.'.$connection.'.host'),
             array_get($this->profiles, $profile.'.local.'.$connection.'.username'),
             $database,
             $progress_cmd,
