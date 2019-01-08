@@ -3,6 +3,7 @@
 /.vscode
 /.vagrant
 /database/database.sqlite
+/build
 /builds
 /build-src
 .env
