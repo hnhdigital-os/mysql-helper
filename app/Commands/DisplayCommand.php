@@ -131,7 +131,7 @@ class DisplayCommand extends Command
         // Select connection profile.
         if (empty($connection = $this->option('connection'))) {
             $connection = $this->selectConnection($profile);
-        } elseif (!array_has($this->profiles, $profile.'.'.$connection)) {
+        } elseif (!array_has($this->profiles, $profile.'.local.'.$connection)) {
             $this->error('Invalid connection profile supplied.');
 
             return 1;
