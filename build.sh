@@ -18,6 +18,7 @@ REPO="git@github.com:hnhdigital-os/mysql-helper.git"
 BRANCH="master"
 COMPOSER="composer"
 TARGET="public-web"
+AUTO_COMMIT=1
 
 MODE="tags"
 
@@ -36,6 +37,11 @@ MODE_TARGET="${TARGET}"
 # Non-stable mode is being used.
 if [ "${MODE}" != "stable" ]; then
   MODE_TARGET="${TARGET}/${MODE}"
+fi
+
+# Disable auto-commit build.
+if [ "0" == "$2" ]; then
+  AUTO_COMMIT="$2"
 fi
 
 # Branch.
