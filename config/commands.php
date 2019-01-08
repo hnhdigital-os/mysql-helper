@@ -82,6 +82,7 @@ return [
         Illuminate\Database\Console\Migrations\RefreshCommand::class,
         Illuminate\Database\Console\Migrations\ResetCommand::class,
         Illuminate\Database\Console\Migrations\RollbackCommand::class,
+        Illuminate\Database\Console\Seeds\SeedCommand::class,
         Illuminate\Database\Console\Migrations\StatusCommand::class,
     ],
 
