@@ -63,4 +63,57 @@ trait SharedTrait
             config(['database.connections.'.$name => $data]);
         }
     }
+
+    /**
+     * Execute remote  command.
+     *
+     * @return
+     */
+    private function execRemoteConnection($profile, $name, $command)
+    {
+        if (!array_get($this->profiles, $profile.'.remote.'.$name.'.working', false)) {
+            $this->error('Remote profile has not been tested. Use configure command to fix.');
+
+            return false;
+        }
+
+        $data = array_get($this->profiles, $profile.'.remote.'.$name, []);
+        $public_key = array_get($data, 'public_key', $this->getUserHome('.ssh/id_rsa.pub'));
+        $private_key = array_get($data, 'private_key', $this->getUserHome('.ssh/id_rsa'));
+
+        try {
+            $connection = ssh2_connect(array_get($data, 'host', ''), array_get($data, 'port', ''));
+
+            ssh2_auth_pubkey_file(
+                $connection,
+                array_get($data, 'username', ''),
+                $public_key,
+                $private_key
+            );
+
+            // Check binary exists.
+            $stream = ssh2_exec($connection, $command);
+            $err_stream = ssh2_fetch_stream($stream, SSH2_STREAM_STDERR);
+
+            stream_set_blocking($stream, true);
+            stream_set_blocking($err_stream, true);
+
+            $result = stream_get_contents($stream);
+            $result_err = stream_get_contents($err_stream);
+
+            if (!empty($result_err)) {
+                $this->error($result_err);
+            }
+
+            fclose($stream);
+            fclose($err_stream);
+            ssh2_disconnect($connection);
+
+            return $result;
+        } catch (\Exception $e) {
+            $this->error(sprintf('%s.', $e->getMessage()));
+
+            return 1;
+        }
+    }
 }
