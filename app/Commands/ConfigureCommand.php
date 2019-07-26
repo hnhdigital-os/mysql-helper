@@ -58,6 +58,10 @@ class ConfigureCommand extends Command
     {
         $profiles = [];
 
+        if (!$this->checkInstalledPackages()) {
+            return;
+        }
+
         $this->loadExistingProfiles();
 
         foreach (array_keys($this->profiles) as $name) {
@@ -107,7 +111,7 @@ class ConfigureCommand extends Command
         // Create profile.
         $this->getConfigPath('profiles/'.$name);
 
-        return $this->mainMenu();
+        return $this->configureProfile($name);
     }
 
     /**
@@ -140,6 +144,8 @@ class ConfigureCommand extends Command
 
     /**
      * Configure remote records for profile.
+     *
+     * @param string $profile
      *
      * @return void
      */
@@ -177,6 +183,9 @@ class ConfigureCommand extends Command
     /**
      * Update a remote profile.
      *
+     * @param string $profile
+     * @param string $name
+     *
      * @return void
      */
     private function updateRemoteProfile($profile, $name)
@@ -186,20 +195,64 @@ class ConfigureCommand extends Command
         $public_key = array_get($data, 'public_key', $this->getUserHome('.ssh/id_rsa.pub'));
         $private_key = array_get($data, 'private_key', $this->getUserHome('.ssh/id_rsa'));
 
-        $option = $this->menu(sprintf('Configuring %s / %s', strtoupper($name), strtoupper($profile)), [
+        $menu = [
             'name'        => 'Name: '.$name,
             'host'        => 'Host: '.array_get($data, 'host', ''),
             'port'        => 'Port: '.array_get($data, 'port', '22'),
             'username'    => 'Username: '.array_get($data, 'username', ''),
-            'public_key'  => sprintf('Public Key: %s %s', $public_key, file_exists($public_key) ? '✔️' : '❌'),
-            'private_key' => sprintf('Private Key: %s %s', $private_key, file_exists($private_key) ? '✔️' : '❌'),
-            'test'        => sprintf('Test connection %s', array_get($data, 'working', false) ? '✔️' : '❌'),
-            'exit'        => 'Back',
-        ])->disableDefaultItems()->open();
+            'method'      => 'Method: '.array_get($data, 'method', 'N/A').'',
+            'methods'     => 'Available methods: '.implode(', ', array_get($data, 'methods', [])).' (enter to reload)',
+        ];
+
+        switch (array_get($data, 'method', '')) {
+            case 'none':
+                break;
+            case 'password':
+                $menu['password'] = 'Password: ******';
+            break;
+            case 'publickey':
+                $menu['public_key'] = sprintf('Public Key: %s %s', $public_key, file_exists($public_key) ? '✔️' : '❌');
+                $menu['private_key'] = sprintf('Private Key: %s %s', $private_key, file_exists($private_key) ? '✔️' : '❌');
+            break;
+        }
+
+        $menu['test'] = sprintf('Test connection %s', array_get($data, 'working', false) ? '✔️' : '❌');
+        $menu['exit'] = 'Back';
+
+        $menu_title = sprintf(
+            'Configuring %s / %s',
+            strtoupper($name),
+            strtoupper($profile)
+        );
+
+        $option = $this->menu($menu_title, $menu)
+            ->disableDefaultItems()
+            ->open();
 
         switch ($option) {
             case 'exit':
                 return $this->configureRemoteProfile($profile);
+            case 'methods':
+                $methods = $this->sshAcceptedMethods(
+                    array_get($data, 'host', ''),
+                    array_get($data, 'port', 22),
+                    array_get($data, 'username', '')
+                );
+
+                if ($methods === false) {
+                    $methods = [];
+                }
+
+                array_set($this->profiles, $profile.'.remote.'.$name.'.methods', $methods);
+
+                return $this->updateRemoteProfile($profile, $name);
+            case 'method':
+                $method = $this->askConnectionMethod(array_get($data, 'methods', []));
+
+                array_set($this->profiles, $profile.'.remote.'.$name.'.method', $method);
+                $this->saveProfile($profile, 'remote');
+
+                return $this->updateRemoteProfile($profile, $name);
             case 'test':
                 return $this->testRemoteProfile($profile, $name);
             case 'name':
@@ -212,6 +265,9 @@ class ConfigureCommand extends Command
     /**
      * Test the remote connection.
      *
+     * @param string $profile
+     * @param string $name
+     *
      * @return void
      */
     private function testRemoteProfile($profile, $name)
@@ -220,28 +276,56 @@ class ConfigureCommand extends Command
 
         $data = array_get($this->profiles, $profile.'.remote.'.$name, []);
 
-        $public_key = array_get($data, 'public_key', $this->getUserHome('.ssh/id_rsa.pub'));
-        $private_key = array_get($data, 'private_key', $this->getUserHome('.ssh/id_rsa'));
+        $method = array_get($data, 'method', '');
+        $settings = [];
+
+        switch ($method) {
+            case 'none':
+                break;
+            case 'agent':
+
+                $settings = [
+                    'username' => array_get($data, 'username', ''),
+                ];
+                break;
+            case 'publickey':
+                $public_key = array_get($data, 'public_key', $this->getUserHome('.ssh/id_rsa.pub'));
+                $private_key = array_get($data, 'private_key', $this->getUserHome('.ssh/id_rsa'));
+
+                if (!file_exists($public_key) || !file_exists($private_key)) {
+                    $this->error(' ❌ Public/private key does not exist.');
+
+                    // Force pause to show errors.
+                    $this->ask('Press any key to continue');
+
+                    return $this->updateRemoteProfile($profile, $name);
+                }
+
+                $settings = [
+                    'username'    => array_get($data, 'username', ''),
+                    'public_key'  => $public_key,
+                    'private_key' => $private_key,
+                ];
+
+                break;
+            case 'password':
+
+                $settings = [
+                    'username' => array_get($data, 'username', ''),
+                    'password' => array_get($data, 'password', ''),
+                ];
+                break;
+        }
 
         $this->line('');
         $this->line(sprintf(' Host: %s', array_get($data, 'host', '')));
-
-        if (!file_exists($public_key) || !file_exists($private_key)) {
-            $this->error(' ❌ Public/private key does not exist.');
-
-            // Force pause to show errors.
-            $this->ask('Press any key to continue');
-
-            return $this->updateRemoteProfile($profile, $name);
-        }
 
         // Test connenction.
         $connection_works = $this->sshConnect(
             array_get($data, 'host', ''),
             array_get($data, 'port', 22),
-            array_get($data, 'username', ''),
-            $public_key,
-            $private_key
+            $method,
+            $settings,
         );
 
         array_set($this->profiles, $profile.'.remote.'.$name.'.working', $connection_works);
@@ -265,26 +349,47 @@ class ConfigureCommand extends Command
      *
      * @param string $host
      * @param string $port
-     * @param string $username
-     * @param string $public_key
-     * @param string $private_key
+     * @param string $method
+     * @param array  $settings
      *
      * @return bool
      */
-    private function sshConnect($host, $port, $username, $public_key, $private_key)
+    private function sshConnect($host, $port, $method, $settings)
     {
         try {
-            $connection = ssh2_connect($host, $port);
+            $session = ssh2_connect($host, $port);
+        } catch (\Exception $e) {
+            $this->error(sprintf('%s.', $e->getMessage()));
 
-            ssh2_auth_pubkey_file(
-                $connection,
-                $username,
-                $public_key,
-                $private_key
-            );
+            return;
+        }
+
+        $ssh2_method = '';
+        $method_args = [];
+
+        switch ($method) {
+            case 'none':
+                $ssh2_method = 'ssh2_auth_none';
+                break;
+            case 'agent':
+                $ssh2_method = 'ssh2_auth_agent';
+                $method_args = [$settings['username']];
+                break;
+            case 'publickey':
+                $ssh2_method = 'ssh2_auth_pubkey_file';
+                $method_args = [$settings['username'], $settings['public_key'], $settings['private_key'], $settings['password'] ?? null];
+                break;
+            case 'password':
+                $ssh2_method = 'ssh2_auth_password';
+                $method_args = [$settings['username'], $settings['password']];
+                break;
+        }
+
+        try {
+            $ssh2_method($session, ...$method_args);
 
             // Connection failed.
-            if (!$connection) {
+            if (!$session) {
                 $this->error(' Connection %s failed ❌');
 
                 return false;
@@ -293,16 +398,17 @@ class ConfigureCommand extends Command
             $this->info(' ✔️ Connection successful');
 
             // Check binary exists.
-            $stream = ssh2_exec($connection, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
+            $stream = ssh2_exec($session, 'command -v "mysql-helper" >/dev/null 2>&1; echo $?');
             stream_set_blocking($stream, true);
 
             $binary_exists = !(bool) intval(stream_get_contents($stream));
 
             fclose($stream);
-            ssh2_disconnect($connection);
+            ssh2_disconnect($session);
 
             if (!$binary_exists) {
-                $this->error(' ❌ mysql-helper binary does not exist');
+                $this->error(' ❌ mysql-helper binary does not exist on remote');
+                $this->line('Please install to successfully establish connection');
 
                 return false;
             }
@@ -317,6 +423,10 @@ class ConfigureCommand extends Command
 
     /**
      * Update remote profile key.
+     *
+     * @param string $profile
+     * @param string $name
+     * @param string $new_name
      *
      * @return void
      */
@@ -361,6 +471,10 @@ class ConfigureCommand extends Command
     /**
      * Update remote profile key.
      *
+     * @param string $profile
+     * @param string $name
+     * @param string $key
+     *
      * @return void
      */
     private function updateRemoteProfileKey($profile, $name, $key)
@@ -378,15 +492,30 @@ class ConfigureCommand extends Command
 
         $value = array_get($this->profiles, $profile.'.remote.'.$name.'.'.$key, $default_value);
 
-        $new_value = $this->ask(sprintf('%s [%s]', ucfirst($key), $value));
+        while (true) {
+            $new_value = $this->ask(sprintf('%s [%s]', ucfirst($key), $value));
 
-        if (empty($new_value)) {
-            return $this->updateRemoteProfile($profile, $name);
-        }
+            if (empty($new_value)) {
 
-        // Expand tilde.
-        if (substr($new_value, 0, 1) == '~') {
-            $new_value = $this->getUserHome(substr($new_value, 2));
+                if (!file_exists($default_value)) {
+                    $this->error(sprintf(' ❌ %s does not exist.', $default_value));
+                    $this->ask('Press any key to continue');
+                }
+
+                return $this->updateRemoteProfile($profile, $name);
+            }
+
+            // Expand tilde.
+            if (substr($new_value, 0, 1) == '~') {
+                $new_value = $this->getUserHome(substr($new_value, 2));
+            }
+
+            if (!file_exists($new_value)) {
+                $this->error(sprintf(' ❌ %s does not exist.', $new_value));
+                continue;
+            }
+
+            break;
         }
 
         array_set($this->profiles, $profile.'.remote.'.$name.'.'.$key, $new_value);
@@ -398,6 +527,8 @@ class ConfigureCommand extends Command
 
     /**
      * Create remote profile.
+     *
+     * @param string $profile
      *
      * @return void
      */
@@ -432,6 +563,21 @@ class ConfigureCommand extends Command
             break;
         }
 
+        // Port.
+        while (true) {
+            $port = $this->ask('Port [22]');
+
+            if (empty($port)) {
+                $port = 22;
+            }
+
+            if (!is_int($port)) {
+                continue;
+            }
+
+            break;
+        }
+
         // Username
         while (true) {
             $username = $this->ask('Username');
@@ -443,14 +589,45 @@ class ConfigureCommand extends Command
             break;
         }
 
-        array_set($this->profiles, $profile.'.remote.'.$name, [
+        $available_methods = $this->sshAcceptedMethods($host, $port ?? 22, $username);
+
+        if ($available_methods === false) {
+            $this->ask('Press any key to continue');
+
+            return $this->createRemoteProfile($profile);
+        }
+
+        $method = $this->askConnectionMethod($methods);
+
+        $profile_data = [
             'host'        => $host,
-            'port'        => 22,
+            'port'        => $port ?? 22,
             'username'    => $username,
-            'public_key'  => $this->getUserHome('.ssh/id_rsa.pub'),
-            'private_key' => $this->getUserHome('.ssh/id_rsa'),
+            'method'      => $method,
+            'methods'     => $available_methods,
             'working'     => false,
-        ]);
+        ];
+
+        switch ($connection) {
+            case 'none':
+                break;
+            case 'agent':
+                break;
+            case 'publickey':
+                $profile_data['public_key'] = $this->getUserHome('.ssh/id_rsa.pub');
+                $profile_data['private_key'] = $this->getUserHome('.ssh/id_rsa');
+                break;
+            case 'password':
+                while (true) {
+                    $password = $this->ask('Password');
+
+                    break;
+                }
+                $profile_data['password'] = $password;
+                break;
+        }
+
+        array_set($this->profiles, $profile.'.remote.'.$name, $profile_data);
 
         $this->saveProfile($profile, 'remote');
 
@@ -458,7 +635,55 @@ class ConfigureCommand extends Command
     }
 
     /**
+     * Ask what connection method to use.
+     *
+     * @param array $methods
+     *
+     * @return array
+     */
+    private function askConnectionMethod($methods)
+    {
+        $accepted_methods = [];
+
+        foreach ($methods as $value) {
+            $accepted_methods[$value] = strtoupper($value);
+        }
+
+        return $this->menu('Select accepted method', $accepted_methods)->disableDefaultItems()->open();
+    }
+
+    /**
+     * Check SSH accepted methods.
+     *
+     * @param string $host
+     * @param int    $port
+     * @param string $username
+     *
+     * @return array
+     */
+    private function sshAcceptedMethods($host, $port, $username)
+    {
+        try {
+            $session = ssh2_connect($host, $port);
+        } catch (\Exception $e) {
+            $this->error(sprintf('%s.', $e->getMessage()));
+
+            return false;
+        }
+
+        if (($mthods = ssh2_auth_none($session, $username)) === true) {
+            return ['none'];
+        }
+
+        $mthods[] = 'agent';
+
+        return $mthods;
+    }
+
+    /**
      * Configure local profile.
+     *
+     * @param string $profile
      *
      * @return void
      */
@@ -496,6 +721,9 @@ class ConfigureCommand extends Command
     /**
      * Update a local profile.
      *
+     * @param string $profile
+     * @param string $name
+     *
      * @return void
      */
     private function updateLocalProfile($profile, $name)
@@ -525,6 +753,10 @@ class ConfigureCommand extends Command
 
     /**
      * Update local profile key.
+     *
+     * @param string $profile
+     * @param string $name
+     * @param string $new_name
      *
      * @return void
      */
@@ -565,6 +797,10 @@ class ConfigureCommand extends Command
     /**
      * Update local profile key.
      *
+     * @param string $profile
+     * @param string $name
+     * @param string $key
+     *
      * @return void
      */
     private function updateLocalProfileKey($profile, $name, $key)
@@ -586,6 +822,9 @@ class ConfigureCommand extends Command
 
     /**
      * Update local profile password.
+     *
+     * @param string $profile
+     * @param string $name
      *
      * @return void
      */
@@ -613,6 +852,8 @@ class ConfigureCommand extends Command
 
     /**
      * Create local profile.
+     *
+     * @param string $profile
      *
      * @return void
      *
@@ -686,6 +927,9 @@ class ConfigureCommand extends Command
     /**
      * Save profile.
      *
+     * @param string $profile
+     * @param string $file
+     *
      * @return void
      */
     private function saveProfile($profile, $file)
@@ -696,6 +940,8 @@ class ConfigureCommand extends Command
 
     /**
      * Delete profile.
+     *
+     * @param string $profile
      *
      * @return void
      */
