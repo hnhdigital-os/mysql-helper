@@ -45,6 +45,10 @@ class RestoreCommand extends Command
      */
     public function handle()
     {
+        if (!$this->checkInstalledPackages()) {
+            return;
+        }
+
         $this->loadExistingProfiles();
 
         // Select profile.
