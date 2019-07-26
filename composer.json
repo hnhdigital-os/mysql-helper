@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "php": "^7.1.3",
+        "php": "^7.2",
         "hnhdigital-os/php-cli-helper": "^1.0",
         "illuminate/database": "5.8.*",
         "laravel-zero/framework": "5.8.*",
