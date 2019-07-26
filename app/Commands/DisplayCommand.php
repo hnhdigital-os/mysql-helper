@@ -30,7 +30,7 @@ class DisplayCommand extends Command
      *
      * @var string
      */
-    protected $description = 'List databases available to this connection.';
+    protected $description = 'List databases available to this connection';
 
     /**
      * Execute the console command.
