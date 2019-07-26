@@ -34,7 +34,7 @@ class CloneCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Clone another database';
+    protected $description = 'Clone database from one to another';
 
     /**
      * Source database type.
@@ -60,6 +60,10 @@ class CloneCommand extends Command
      */
     public function handle()
     {
+        if (!$this->checkInstalledPackages()) {
+            return;
+        }
+
         $this->loadExistingProfiles();
 
         // Source mode.

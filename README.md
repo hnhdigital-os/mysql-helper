@@ -27,12 +27,21 @@ This package has been developed by H&H|Digital, an Australian botique developer.
 
 ## Installation
 
-Run the installer to automatically download the latest version.
+Via commmand line:
 
-`bash <(curl -s https://hnhdigital-os.github.io/mysql-helper/install)`
+`bash <(curl -s https://hnhdigital-os.github.io/mysql-helper/builds/install)`
+
+Download the latest build:
+
+`curl -o ./mysql-helper -LSs https://github.com/hnhdigital-os/mysql-helper/raw/master/builds/fs-tasker`
+`chmod 755 ./mysql-helper`
+
+Move it local bin:
+
+`mv ./fs-tasker /usr/local/bin/fs-tasker`
 
 Run the install command to run automatically dependency installation.
-NOTE: This currently only works on Debian (uses apt-get). See above requirements to manually install.
+NOTE: This currently only works on Debian (uses apt-get). See the software requirements to manually install.
 
 `mysql-helper install`
 
@@ -50,12 +59,12 @@ This tool provides a self-update mechanism. Simply run the self-update command.
 
 ```
 USAGE: mysql-helper <command> [options] [arguments]
-  configure        Run the configuration wizard.
-  self-update      Check if there is a new version and update.
-  self-update      [--tag=?]
-                   Update this binary to a specific tagged release.
-  self-update      [--check-release=?]
-                   Returns the current binary version.
+  backup      Backup a specific local database
+  clone       Clone database from one to another
+  configure   Configure profiles and connections
+  display     List databases available to this connection
+  install     Install system requirements
+  restore     Restore a specific local database
 ```
 
 ## Contributing

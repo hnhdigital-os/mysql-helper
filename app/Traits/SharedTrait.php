@@ -2,8 +2,12 @@
 
 namespace App\Traits;
 
+use HnhDigital\CliHelper\SoftwareTrait;
+
 trait SharedTrait
 {
+    use SoftwareTrait;
+
     /**
      * Profiles.
      *
@@ -32,6 +36,40 @@ trait SharedTrait
                 'local'  => $this->loadYamlFile($path.'/local.yml'),
             ];
         }
+    }
+
+    /**
+     * Check required packages are installed to run this tool.
+     *
+     * @return bool
+     */
+    private function checkInstalledPackages()
+    {
+        $check = true;
+
+        if (!function_exists('ssh2_connect')) {
+            $this->error(' ❌ ssh2 is not enabled');
+            $check = false;
+        }
+
+        if (!$this->binaryExists('zip')) {
+            $this->error(' ❌ zip is not installed');
+            $check = false;
+        }
+
+        if (!$this->binaryExists('pv')) {
+            $this->error(' ❌ pv is not installed');
+            $check = false;
+        }
+
+        if (!$check) {
+            $this->line('');
+            $this->error('Required packages need to be installed.');
+            $this->line('Please run mysql-helper install to fix');
+            $this->line('');
+        }
+
+        return $check;
     }
 
     /**
