@@ -59,12 +59,12 @@ This tool provides a self-update mechanism. Simply run the self-update command.
 
 ```
 USAGE: mysql-helper <command> [options] [arguments]
-  configure        Run the configuration wizard.
-  self-update      Check if there is a new version and update.
-  self-update      [--tag=?]
-                   Update this binary to a specific tagged release.
-  self-update      [--check-release=?]
-                   Returns the current binary version.
+  backup      Backup a specific local database
+  clone       Clone database from one to another
+  configure   Configure profiles and connections
+  display     List databases available to this connection
+  install     Install system requirements
+  restore     Restore a specific local database
 ```
 
 ## Contributing
