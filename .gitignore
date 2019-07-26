@@ -2,8 +2,5 @@
 /.idea
 /.vscode
 /.vagrant
-/database/database.sqlite
-/build
-/builds
-/build-src
+/database
 .env
