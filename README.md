@@ -33,12 +33,12 @@ Via commmand line:
 
 Download the latest build:
 
-`curl -o ./mysql-helper -LSs https://github.com/hnhdigital-os/mysql-helper/raw/master/builds/fs-tasker`
-`chmod 755 ./mysql-helper`
+`curl -o ./mysql-helper -LSs https://github.com/hnhdigital-os/mysql-helper/raw/master/builds/mysql-helper`
+`chmod a+x ./mysql-helper`
 
 Move it local bin:
 
-`mv ./fs-tasker /usr/local/bin/fs-tasker`
+`mv ./mysql-helper /usr/local/bin/mysql-helper`
 
 Run the install command to run automatically dependency installation.
 NOTE: This currently only works on Debian (uses apt-get). See the software requirements to manually install.
